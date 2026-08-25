@@ -166,6 +166,40 @@ Le cours s'en tient à **matplotlib** pour les graphiques : histogramme, nuage
 de points et diagramme en barres suffisent au programme, et une seule API
 graphique vaut mieux que deux pour des débutants.
 
+## Ce que les étudiants téléchargent
+
+Python et ses bibliothèques s'exécutent dans le navigateur, donc ils s'y
+téléchargent. Volumes mesurés au premier chargement, cache vide :
+
+| Séance | Depuis ce site | Depuis le CDN | **Total** |
+|--------|---------------:|--------------:|----------:|
+| 1 et 2 | 1,6 Mo | 11,6 Mo | **13,2 Mo** |
+| 3      | 1,6 Mo | 14,4 Mo | **16,0 Mo** |
+| 4      | 1,6 Mo | 19,2 Mo | **20,8 Mo** |
+| 5      | 1,6 Mo | 49,5 Mo | **51,1 Mo** |
+
+La séance 5 coûte à elle seule plus que les quatre autres réunies : la
+régression fait venir SciPy (13,4 Mo), statsmodels (7,7 Mo) et matplotlib
+(6,7 Mo). Pour une promotion de trente étudiants, comptez ~1,5 Go.
+
+**Pyodide est chargé depuis `cdn.jsdelivr.net`, pas depuis ce serveur.** Si le
+réseau de la salle bloque ce CDN, rien ne démarre. `jupyter lite build`
+accepte `--pyodide <tarball>` pour l'héberger soi-même — non retenu ici, mais
+c'est le premier levier si le problème se pose.
+
+### Comment ces chiffres ont été obtenus
+
+La part « depuis ce site » est mesurée par CDP (`encodedDataLength`) sur un
+contexte navigateur neuf. La part CDN ne l'est **pas** : le noyau tourne dans
+un *web worker*, dont le trafic échappe à la session CDP attachée à la page —
+une première mesure annonçait 1,6 Mo au total, ce qui était faux. Les tailles
+CDN viennent donc de requêtes HEAD sur les fichiers de
+`cdn.jsdelivr.net/pyodide/v314.0.5/full/`, après résolution transitive des
+dépendances lues dans `pyodide-lock.json`.
+
+À revérifier après toute mise à jour de `jupyterlite-pyodide-kernel`, qui fixe
+la version de Pyodide.
+
 ## Données
 
 Trois jeux dans [`data/`](data), reconstructibles par

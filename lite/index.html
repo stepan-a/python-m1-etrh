@@ -61,6 +61,14 @@
     background: var(--carte); border-left: 3px solid var(--accent);
     padding: 1rem 1.2rem; margin: 1.5rem 0; font-size: .95rem;
   }
+  table.poids {
+    border-collapse: collapse; margin: .8rem 0; font-size: .92rem;
+  }
+  table.poids td { padding: .18rem .9rem .18rem 0; vertical-align: baseline; }
+  table.poids td:nth-child(2) {
+    text-align: right; font-variant-numeric: tabular-nums; font-weight: bold;
+  }
+  table.poids td:nth-child(3) { color: var(--doux); }
   code {
     font-family: ui-monospace, "SF Mono", Menlo, monospace;
     font-size: .88em; background: var(--fond);
@@ -84,11 +92,25 @@
   dans l&rsquo;onglet.</p>
 
   <div class="note">
-    <strong>Premier chargement un peu long</strong> — une vingtaine de mégaoctets
-    sont téléchargés une fois, puis mis en cache. Votre travail est enregistré
-    dans ce navigateur : il survit à un rafraîchissement, mais pas à un
-    changement d&rsquo;ordinateur. Pour le conserver ou le rendre, utilisez
-    <code>File → Download</code>.
+    <strong>Prévoyez du téléchargement au premier chargement.</strong> Python
+    et ses bibliothèques s&rsquo;installent dans le navigateur, une fois, puis
+    sont mis en cache. Le volume dépend de la séance&nbsp;:
+    <table class="poids">
+      <tr><td>Séances 1 et 2</td><td>13&nbsp;Mo</td><td>Python seul</td></tr>
+      <tr><td>Séance 3</td><td>16&nbsp;Mo</td><td>+ NumPy</td></tr>
+      <tr><td>Séance 4</td><td>21&nbsp;Mo</td><td>+ pandas</td></tr>
+      <tr><td>Séance 5</td><td>51&nbsp;Mo</td><td>+ matplotlib, statsmodels, SciPy</td></tr>
+    </table>
+    Sur une connexion modeste, la séance 5 demande donc un peu de patience.
+    Ce qui est téléchargé une fois reste en cache&nbsp;: si vous revenez sur le
+    même ordinateur avec le même navigateur, c&rsquo;est immédiat.
+  </div>
+
+  <div class="note">
+    <strong>Votre travail est enregistré dans ce navigateur.</strong> Il survit
+    à un rafraîchissement, mais pas à un changement d&rsquo;ordinateur ni à un
+    nettoyage des données de navigation. Pour le conserver ou le rendre,
+    utilisez <code>File → Download</code>.
   </div>
 
   <h2>Les séances</h2>
