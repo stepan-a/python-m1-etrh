@@ -2,18 +2,16 @@
 #
 # Le runner est le même que celui du site (tag « stepan@puck », exécuteur
 # shell, sans image Docker). Outils requis sur le runner, tous présents :
-#   - make, pandoc, rsync, curl, python3 (avec le module venv)
-#   - release-cli, uniquement pour les Releases sur tag
+#   - make, pandoc, rsync, python3 (avec le module venv)
 #
-# Installation unique de release-cli sur le runner :
-#   sudo curl -L -o /usr/local/bin/release-cli \
-#     https://gitlab.com/gitlab-org/release-cli/-/releases/permalink/latest/downloads/bin/release-cli-linux-amd64
-#   sudo chmod +x /usr/local/bin/release-cli
+# L'archive hors ligne n'est pas publiée en Release GitLab : elle est
+# construite avec le site et servie depuis celui-ci, sous /zip/. Elle
+# correspond donc toujours aux notebooks en ligne, et le lien de
+# téléchargement ne dépend d'aucun compte.
 
 stages:
   - verify
   - deploy
-  - release
 
 variables:
   # Racine servie par le vhost le-mans.adjemian.eu, sur puck, aux côtés des
@@ -61,46 +59,13 @@ site:
     - stepan@puck
   script:
     - make lite
+    - make zip
     - test -f dist/index.html
     - test -f dist/lite/lab/index.html
     - test -f dist/lite/files/seance-4.ipynb
+    - test -f dist/zip/cours-python-etrh.zip
     - mkdir -p "$CIBLE"
     - rsync -a --delete dist/ "$CIBLE/"
   environment:
     name: production
     url: https://le-mans.adjemian.eu/python-m1-etrh/
-
-# Sur un tag : archive hors ligne (notebooks construits + données + lanceur),
-# téléversée dans le Package Registry puis attachée à une Release.
-release-zip:
-  stage: release
-  only:
-    - tags
-  tags:
-    - stepan@puck
-  script:
-    - make content
-    - rm -rf cours-python-etrh
-    - mkdir cours-python-etrh
-    - cp -r content/*.ipynb content/data content/wheels cours-python-etrh/
-    - cp cours.py requirements.txt LISEZMOI.txt DONNEES.md cours-python-etrh/
-    - python3 -m zipfile -c cours-python-etrh.zip cours-python-etrh/
-    - |
-      curl --fail --silent --show-error \
-        --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
-        --upload-file cours-python-etrh.zip \
-        "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/cours-python-etrh/${CI_COMMIT_TAG}/cours-python-etrh.zip"
-  artifacts:
-    name: cours-python-etrh
-    paths:
-      - cours-python-etrh.zip
-    expire_in: 4 weeks
-  release:
-    tag_name: $CI_COMMIT_TAG
-    name: "Cours Python M1 ETRH $CI_COMMIT_TAG"
-    description: "Cours « Introduction à Python » prêt à l'emploi hors ligne. Télécharge cours-python-etrh.zip, dézippe-le, puis lance « python cours.py »."
-    assets:
-      links:
-        - name: "cours-python-etrh.zip"
-          url: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/cours-python-etrh/${CI_COMMIT_TAG}/cours-python-etrh.zip"
-          link_type: package

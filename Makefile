@@ -37,7 +37,7 @@ CORRIGES  := $(patsubst %,notebooks/corriges/seance-%.ipynb,$(SEANCES))
 
 LUA       := build/title-block.lua build/exercices.lua
 
-.PHONY: all notebooks corriges check content lite serve venv lab lock clean distclean
+.PHONY: all notebooks corriges check content lite zip serve venv lab lock clean distclean
 
 all: notebooks
 
@@ -153,7 +153,24 @@ lite: content | $(VENV_PREREQ)
 	@cp lite/index.html dist/index.html
 	@echo "✓ site construit dans dist/ ($$(du -sh dist | cut -f1))"
 
-serve: lite
+# Archive hors ligne, servie DEPUIS le site : dist/zip/ est donc construit
+# avant le rsync et part avec le reste. C'est ce qui garantit que l'archive
+# téléchargée correspond toujours aux notebooks en ligne — et cela évite le
+# piège du « rsync --delete », qui effacerait un zip déposé séparément.
+ZIPDIR := cours-python-etrh
+
+zip: content lite/zip-index.html
+	@rm -rf $(ZIPDIR) dist/zip
+	@mkdir -p $(ZIPDIR) dist/zip
+	@cp content/*.ipynb $(ZIPDIR)/
+	@cp -r content/data content/wheels $(ZIPDIR)/
+	@cp cours.py requirements.txt LISEZMOI.txt DONNEES.md $(ZIPDIR)/
+	@$(PYTHON) -m zipfile -c dist/zip/$(ZIPDIR).zip $(ZIPDIR)/
+	@rm -rf $(ZIPDIR)
+	@cp lite/zip-index.html dist/zip/index.html
+	@echo "✓ dist/zip/$(ZIPDIR).zip ($$(du -h dist/zip/$(ZIPDIR).zip | cut -f1))"
+
+serve: lite zip
 	@echo "▶ http://localhost:8000/  (Ctrl-C pour arrêter)"
 	@cd dist && $(PYTHON) -m http.server
 
@@ -177,7 +194,7 @@ lock: $(STAMP)
 	$(BIN)/pip freeze > requirements.lock
 
 clean:
-	rm -rf build/etudiant build/corrige notebooks content dist .jupyterlite.doit.db
+	rm -rf build/etudiant build/corrige notebooks content dist $(ZIPDIR) .jupyterlite.doit.db
 
 distclean: clean
 	rm -rf $(VENV)

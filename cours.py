@@ -152,9 +152,20 @@ def a_reconstruire(numero: int, corrige: bool) -> bool:
     return notebook.stat().st_mtime < source.stat().st_mtime
 
 
+def dossier_notebooks() -> Path:
+    """Où se trouvent les notebooks à ouvrir.
+
+    En mode auteur, le Makefile et ce script les construisent dans
+    « notebooks/ ». Dans l'archive distribuée, ils sont à la racine, à côté
+    de « data/ » — c'est ce que veut JupyterLite, et cela garde le même
+    chemin « data/… » qu'en ligne.
+    """
+    return NOTEBOOKS if NOTEBOOKS.is_dir() else ROOT
+
+
 def launch() -> None:
     info("Ouverture de JupyterLab… (ferme la fenêtre/onglet pour quitter)")
-    subprocess.run([str(venv_exe("jupyter")), "lab", str(NOTEBOOKS)])
+    subprocess.run([str(venv_exe("jupyter")), "lab", str(dossier_notebooks())])
 
 
 def main() -> None:

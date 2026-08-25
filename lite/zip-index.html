@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cours Python M1 ETRH — version hors ligne</title>
+<style>
+  :root {
+    --fond: #fbfaf8; --texte: #1c1b1a; --doux: #5d5a55;
+    --trait: #ddd8d0; --accent: #7a2e2e; --carte: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --fond: #17181a; --texte: #e8e6e3; --doux: #a09c96;
+      --trait: #32343a; --accent: #d98b8b; --carte: #1f2124;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 3rem 1.5rem 5rem;
+    background: var(--fond); color: var(--texte);
+    font-family: Palatino, "Palatino Linotype", Georgia, serif;
+    line-height: 1.65;
+  }
+  main { max-width: 42rem; margin: 0 auto; }
+  h1 { font-size: 1.8rem; margin: 0 0 .3rem; font-weight: normal; }
+  .sous { color: var(--doux); font-style: italic; margin: 0 0 2rem; }
+  h2 {
+    font-size: 1rem; text-transform: uppercase; letter-spacing: .09em;
+    color: var(--doux); font-weight: normal;
+    margin: 2.5rem 0 1rem; padding-bottom: .4rem;
+    border-bottom: 1px solid var(--trait);
+  }
+  a { color: var(--accent); }
+  .telecharger {
+    display: block; text-align: center; text-decoration: none;
+    background: var(--carte); border: 1px solid var(--trait);
+    border-left: 4px solid var(--accent);
+    border-radius: 6px; padding: 1.4rem; margin: 2rem 0;
+    color: inherit; transition: border-color .15s;
+  }
+  .telecharger:hover { border-color: var(--accent); }
+  .telecharger strong { display: block; font-size: 1.25rem; margin-bottom: .2rem; }
+  .telecharger span { color: var(--doux); font-size: .92rem; }
+  pre {
+    background: var(--carte); border: 1px solid var(--trait);
+    border-radius: 4px; padding: .9rem 1.1rem; overflow-x: auto;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: .9rem;
+  }
+  code {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: .88em; background: var(--fond);
+    padding: .1em .35em; border-radius: 3px; border: 1px solid var(--trait);
+  }
+  .note {
+    background: var(--carte); border-left: 3px solid var(--accent);
+    padding: 1rem 1.2rem; margin: 1.5rem 0; font-size: .95rem;
+  }
+  footer {
+    margin-top: 3.5rem; padding-top: 1.2rem;
+    border-top: 1px solid var(--trait); color: var(--doux); font-size: .88rem;
+  }
+</style>
+</head>
+<body>
+<main>
+
+  <h1>Version hors ligne</h1>
+  <p class="sous">Introduction à Python — Master 1 Économie du travail et ressources humaines</p>
+
+  <div class="note">
+    <strong>Vous n&rsquo;en avez probablement pas besoin.</strong> Le cours
+    s&rsquo;exécute directement dans votre navigateur, sans rien installer :
+    <a href="../">retour aux notebooks en ligne</a>. Cette archive sert à
+    travailler sans connexion, ou pour le projet de groupe si vos données
+    dépassent ce que le navigateur peut traiter.
+  </div>
+
+  <a class="telecharger" href="./cours-python-etrh.zip">
+    <strong>Télécharger cours-python-etrh.zip</strong>
+    <span>Les cinq séances, les corrigés, les jeux de données et le lanceur</span>
+  </a>
+
+  <h2>Utilisation</h2>
+  <p>Il vous faut <a href="https://www.python.org/downloads/">Python&nbsp;3</a>
+    installé. Sous Windows, cochez bien <em>Add Python to PATH</em> pendant
+    l&rsquo;installation.</p>
+  <p>Décompressez l&rsquo;archive, ouvrez un terminal dans le dossier obtenu,
+    puis&nbsp;:</p>
+  <pre>python cours.py</pre>
+  <p>Sous Windows, c&rsquo;est parfois <code>py cours.py</code>. Au premier
+    lancement, le programme installe ce qu&rsquo;il faut — comptez une minute —
+    puis ouvre le cours dans votre navigateur via JupyterLab. Les fois
+    suivantes, c&rsquo;est immédiat.</p>
+
+  <h2>Contenu</h2>
+  <pre>seance-1.ipynb … seance-5.ipynb          les cinq séances
+seance-1-corrige.ipynb …                 les corrigés
+data/                                    les jeux de données
+wheels/                                  bibliothèques d'appoint
+cours.py                                 le lanceur
+DONNEES.md                               provenance des données</pre>
+  <p>Les notebooks lisent les données sous <code>data/</code> : gardez le
+    dossier tel quel, un notebook déplacé ailleurs ne trouverait plus ses
+    fichiers.</p>
+
+  <footer>
+    Archive reconstruite à chaque mise à jour du cours : elle correspond
+    toujours aux notebooks en ligne. ·
+    <a href="../">Notebooks en ligne</a> ·
+    <a href="https://stephane-adjemian.fr/teaching/python-m1-etrh/">Page du cours</a> ·
+    <a href="https://git.ithaca.fr/stepan/python-m1-etrh">Sources</a>
+  </footer>
+
+</main>
+</body>
+</html>
