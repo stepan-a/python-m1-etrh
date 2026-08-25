@@ -12,6 +12,23 @@ La source unique de chaque séance est un fichier Org dans [`seances/`](seances)
 les notebooks Jupyter en sont **générés**, en deux versions — celle de
 l'étudiant et le corrigé.
 
+## Où vit ce dépôt
+
+Deux remotes, aux rôles distincts :
+
+| Remote   | URL                                          | Rôle                          |
+|----------|----------------------------------------------|-------------------------------|
+| `puck`   | `git.ithaca.fr:stepan/python-m1-etrh`        | **construit et déploie** (CI) |
+| `github` | `github.com/stepan-a/python-m1-etrh`         | miroir public, cité par le site |
+
+Seul `puck` a un runner et l'accès à `/puck/www` : c'est lui qui vérifie les
+corrigés et publie le site. GitHub est la vitrine vers laquelle pointent les
+pages du cours. Pousser aux deux :
+
+```bash
+git push puck master && git push github master
+```
+
 ## Aperçu de la chaîne
 
 ```
