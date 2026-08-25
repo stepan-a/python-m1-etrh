@@ -25,7 +25,29 @@ pas librement redistribuables — voir =DONNEES.md= pour le détail. Retenez que
 les résultats de cette séance illustrent des méthodes, ils ne démontrent pas
 des faits.
 
-# TODO(rédaction) : introduction développée, sur le modèle de la séance 1.
+C'est la séance qui change tout. Jusqu'ici, les données étaient un prétexte :
+sept salaires écrits à la main servaient à illustrer une boucle. À partir
+d'aujourd'hui, les données sont le sujet, et l'outil s'efface.
+
+*pandas* est la bibliothèque qui a fait de Python un langage d'analyse de
+données. Elle apporte un objet, le =DataFrame= : un tableau à deux dimensions
+dont les colonnes portent un nom et un type. C'est, très exactement, ce que
+vous avez toujours manipulé sous forme de feuille de calcul — à ceci près que
+chaque opération s'écrit, se relit et se rejoue.
+
+Le changement d'échelle s'accompagne d'un changement d'habitudes. Avec sept
+salaires, on peut tout regarder ; avec cinq mille, c'est impossible, et il
+faut *interroger* les données au lieu de les contempler. Les trois premières
+questions sont toujours les mêmes, et cette séance leur donne une réponse
+mécanique : combien d'observations et de variables ? de quels types, et
+combien de valeurs manquantes ? à quoi ressemblent les distributions ?
+
+Un avertissement, enfin, qui vaut pour toute la séance. Vous allez obtenir des
+chiffres très vite — une moyenne par diplôme s'écrit en une ligne. La facilité
+est un piège : un résultat produit en une seconde demande le même examen
+critique qu'un résultat calculé péniblement. Nous verrons dès le début que ce
+fichier contient des âges de 999 ans et des salaires à cinq chiffres. Une
+moyenne calculée dessus est fausse, et elle n'aura pas l'air fausse.
 
 * Charger les données
 
@@ -251,6 +273,23 @@ salaires.groupby("sexe")["salaire_net_mensuel"].agg(["count", "mean", "median"])
 # Croiser deux variables : la liste des clés donne un tableau à deux entrées.
 salaires.groupby(["sexe", "temps_travail"])["salaire_net_mensuel"].mean().round(0)
 #+END_SRC
+
+=groupby= mérite qu'on s'arrête sur sa mécanique, parce qu'elle se retrouve
+partout. Elle procède en trois temps : *découper* le tableau en groupes selon
+la ou les clés, *appliquer* un calcul à chacun, *recombiner* les résultats en
+un seul objet. Une fois ce schéma en tête, la syntaxe cesse d'être une formule
+à retenir : on choisit la clé, la colonne et le calcul, et l'écriture suit.
+
+=.agg(["count", "mean"])= applique plusieurs calculs d'un coup. N'omettez
+jamais =count= : une moyenne calculée sur onze observations et une moyenne
+calculée sur onze mille s'affichent avec la même assurance, et ce sont deux
+choses très différentes. Afficher l'effectif à côté de chaque moyenne est la
+plus économique des précautions.
+
+Enfin, deux clés au lieu d'une produisent un résultat à deux niveaux
+d'indexation. C'est déroutant au premier abord ; =.unstack()= remet le second
+niveau en colonnes et donne le tableau croisé auquel on s'attend, comme le
+montre l'exercice 4.6.
 
 *Exercice 4.4* /(socle)/ — Calculez le salaire net moyen par secteur, trié du
 plus élevé au plus faible, et affichez également l'effectif de chaque secteur.

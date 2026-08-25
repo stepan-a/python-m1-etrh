@@ -26,7 +26,18 @@ ensemble de salaires, puis classer des individus par tranche de revenu. Vous
 referez tout cela en une ligne avec pandas en séance 4 — savoir ce que cette
 ligne fait est précisément l'objet d'aujourd'hui.
 
-# TODO(rédaction) : introduction développée, sur le modèle de la séance 1.
+Un mot sur la méthode avant de commencer. Tout ce que nous allons écrire
+aujourd'hui à la main — parcourir des salaires, en faire la moyenne, compter
+les individus d'une tranche — pandas le fera en un seul appel de fonction en
+séance 4. On pourrait donc se demander à quoi bon.
+
+La réponse tient en une phrase : *une commande dont on ignore ce qu'elle fait
+est une commande dont on ne peut pas repérer les erreurs*. Quand
+=df.groupby("diplome").mean()= renverra un résultat surprenant — une moyenne
+absurde, un groupe qui manque, un effectif qui ne tombe pas juste — il faudra
+savoir ce que la machine a fait pour comprendre où cela a dérapé. Écrire la
+boucle une fois soi-même est le prix de cette compréhension. Ensuite, on
+utilise l'outil court, et sans mauvaise conscience.
 
 * Les listes
 
@@ -39,7 +50,17 @@ print(salaires)
 print(len(salaires))        # combien d'éléments ?
 #+END_SRC
 
-# TODO(rédaction) : paragraphe sur la mutabilité et le coût des insertions.
+Trois propriétés définissent une liste. Elle est *ordonnée* : les éléments
+gardent la position où on les a mis, et cet ordre a un sens. Elle est
+*modifiable* — on dit /mutable/ — : on peut remplacer un élément, en ajouter,
+en retirer, sans reconstruire la liste. Elle est enfin *hétérogène* : rien
+n'interdit d'y mêler des nombres et du texte, même si en pratique une colonne
+de données contient toujours des valeurs de même nature.
+
+=len()= donne le nombre d'éléments. Retenez cette fonction : c'est
+l'*effectif* de votre échantillon, la première chose qu'on vérifie après
+avoir chargé des données, et celle qu'on vérifie à nouveau après chaque
+filtrage pour savoir combien d'observations on vient de perdre.
 
 ** Indexation et slicing
 
@@ -78,6 +99,20 @@ print(salaires)
 print(min(salaires), max(salaires), sum(salaires))
 #+END_SRC
 
+Deux écritures cohabitent ici, et la distinction vaut d'être comprise une fois
+pour toutes. =salaires.append(1750)= s'écrit *après* la liste, avec un point :
+c'est une *méthode*, une action que la liste sait faire sur elle-même.
+=len(salaires)= et =sum(salaires)= s'écrivent *avant*, avec des parenthèses :
+ce sont des *fonctions*, qui prennent la liste en argument. Rien de profond
+là-dedans, mais l'erreur =salaires.len()= est un classique, et le message
+qu'elle produit n'est pas limpide.
+
+Attention aussi à =sort()= : la méthode trie la liste *sur place* et ne
+renvoie rien. Écrire =salaires = salaires.sort()= détruit vos données — la
+variable reçoit =None=. Si vous voulez garder l'original, utilisez la fonction
+=sorted(salaires)=, qui renvoie une nouvelle liste triée sans toucher à
+l'ancienne.
+
 *Exercice 2.1* /(socle)/ — À partir de la liste =salaires= ci-dessous,
 affichez le salaire le plus élevé, le plus faible, et la somme totale.
 Affichez ensuite les trois premiers salaires une fois la liste triée.
@@ -95,7 +130,22 @@ print(salaires[:3])
 
 * Tuples, dictionnaires, ensembles
 
-# TODO(rédaction) : développer le « quand utiliser quoi ».
+La liste n'est pas la seule structure du langage, et le choix entre elles
+n'est pas affaire de goût : chacune répond à une question différente.
+
+| Structure     | Écriture         | À utiliser quand                          |
+|---------------+------------------+-------------------------------------------|
+| Liste         | ~[1, 2, 3]~      | l'ordre compte et le contenu peut changer |
+| Tuple         | ~(1, 2)~         | le contenu ne doit *pas* changer          |
+| Dictionnaire  | ~{"age": 34}~    | chaque valeur porte un *nom*              |
+| Ensemble      | ~{1, 2, 3}~      | seules importent les valeurs *distinctes* |
+
+Une règle pratique pour trancher : demandez-vous comment vous allez chercher
+l'information. Par sa *position* — « le troisième salarié » — c'est une liste.
+Par un *nom* — « son diplôme » — c'est un dictionnaire. Si vous voulez
+seulement savoir *quelles valeurs existent*, c'est un ensemble. Et si vous
+voulez surtout être certain que personne ne modifiera vos données par
+inadvertance, c'est un tuple.
 
 Un *tuple* s'écrit entre parenthèses et ne peut plus être modifié. On s'en
 sert pour ce qui ne doit pas changer : des coordonnées, un couple de bornes.
@@ -125,6 +175,17 @@ salarie["anciennete"] = 6            # ajout d'une clé
 print(salarie.keys())
 print(salarie.values())
 #+END_SRC
+
+Regardez la forme de ce dictionnaire : une *observation* de votre futur jeu de
+données. Chaque clé est une variable, chaque valeur une modalité. Une liste de
+tels dictionnaires — un par salarié — est exactement ce qu'est un tableau de
+données, et c'est très précisément ce que pandas transformera en =DataFrame= à
+la séance 4. Vous manipulez déjà la bonne structure mentale.
+
+Notez enfin qu'affecter une clé qui n'existe pas la *crée*, là où lire une clé
+inexistante déclenche une erreur. Cette asymétrie surprend, mais elle est
+commode : elle permet de construire un dictionnaire au fil d'une boucle, ce
+que nous ferons dans l'exercice 2.5.
 
 Un *ensemble* (=set=) est une collection sans ordre et *sans doublon*. Il
 répond à une question précise : quelles sont les modalités distinctes ?
@@ -218,6 +279,20 @@ for annee in range(1, 6):
     print(f"Année {annee} : {salaire:.2f} €")
 #+END_SRC
 
+Lisez la première ligne comme une phrase : « pour chaque =salaire= parmi
+=salaires=, fais ceci ». La variable de boucle prend tour à tour chaque
+valeur ; son nom est libre, et le choisir au singulier rend la boucle
+lisible.
+
+=range(1, 6)= engendre 1, 2, 3, 4, 5 — la borne de fin est exclue, comme dans
+le slicing. =range(5)= tout court part de zéro et donne 0 à 4. Retenez surtout
+la différence d'intention : on parcourt une *liste* quand on veut traiter des
+données, on parcourt un =range= quand on veut répéter un nombre connu de fois.
+
+Un détail qui compte dans l'exemple ci-dessus : =salaire= est réaffecté à
+chaque tour, donc la croissance se *compose* d'une année sur l'autre. C'est
+bien le calcul d'intérêts composés de la séance 1, écrit autrement.
+
 ** Accumuler dans une boucle
 
 C'est le motif central de la séance : on prépare un accumulateur avant la
@@ -234,6 +309,24 @@ moyenne = total / len(salaires)
 print(f"Masse salariale : {total} €")
 print(f"Salaire moyen   : {moyenne:.2f} €")
 #+END_SRC
+
+Ce motif en trois temps — préparer l'accumulateur *avant* la boucle,
+l'alimenter *dans* la boucle, l'exploiter *après* — est le schéma le plus
+utile de la séance. Il calcule une somme, mais aussi un compte, un maximum,
+une liste filtrée : seule change l'opération du milieu.
+
+Deux erreurs le guettent, toutes deux silencieuses. Initialiser =total= à
+l'intérieur de la boucle le remet à zéro à chaque tour, et le résultat vaut
+alors le dernier salaire. Placer le calcul de la moyenne *dans* la boucle
+donne une moyenne partielle à chaque étape. Dans les deux cas Python ne
+proteste pas : c'est l'indentation, et elle seule, qui distingue le juste du
+faux. Prenez l'habitude de vous demander, pour chaque ligne, si elle doit
+s'exécuter une fois ou à chaque tour.
+
+Python offre bien sûr =sum(salaires)=, plus court et plus rapide. L'intérêt
+d'écrire la boucle est qu'elle se généralise : dès que l'opération n'a pas de
+fonction toute faite — « compter ceux qui dépassent un seuil », « accumuler
+séparément selon le sexe » — c'est ce motif qu'on écrit.
 
 ** La boucle =while=
 
@@ -252,6 +345,12 @@ while salaire < median:
 
 print(f"{annees} ans (salaire final : {salaire:.2f} €)")
 #+END_SRC
+
+La différence avec =for= tient à ce qu'on sait d'avance. =for= parcourt une
+collection dont la taille est connue ; =while= répète tant qu'une condition
+tient, sans savoir combien de tours cela prendra. Ici la question posée —
+« combien d'années pour rattraper la médiane ? » — n'a justement pas de
+réponse connue avant le calcul.
 
 Attention : si la condition ne devient jamais fausse, la boucle tourne
 indéfiniment. Vérifiez toujours que la variable testée est bien modifiée dans

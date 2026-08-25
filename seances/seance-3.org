@@ -22,7 +22,29 @@ du code est toujours le signe qu'il manque une abstraction : c'est le rôle des
 - manipuler un tableau *NumPy* et comprendre ce qu'est une opération
   vectorisée.
 
-# TODO(rédaction) : introduction développée, sur le modèle de la séance 1.
+Deux idées gouvernent cette séance, et elles se rejoignent.
+
+La première est qu'*un code qu'on recopie est un code qu'on maintiendra mal*.
+À la séance précédente, le classement par tranche de revenu a été écrit deux
+fois : une fois pour un salarié, une fois dans une boucle. Le jour où les
+seuils changent — et ils changeront, le SMIC est révisé chaque année — il
+faudra les corriger aux deux endroits, et l'on en oubliera un. Une fonction
+règle le problème en donnant un *nom* au calcul : on le corrige à un seul
+endroit, et tous les appels en bénéficient.
+
+La seconde est qu'*on écrit du code pour le relire*. Vous rendrez un notebook
+de projet que je lirai, que vos coéquipiers liront, et que vous relirez
+vous-mêmes après plusieurs semaines d'interruption. Ce qui vous paraît
+évident aujourd'hui ne le sera plus. Les fonctions bien nommées, les
+docstrings et les commentaires qui expliquent le /pourquoi/ ne sont pas des
+politesses : ce sont les seules choses qui rendent un travail reproductible,
+et la reproductibilité est explicitement ce qu'on attend de vous.
+
+La séance se termine par un premier contact avec NumPy. Ce n'est pas un
+appendice : pandas est construit dessus, et la moitié de ce qui paraît
+mystérieux dans pandas — pourquoi une opération porte sur toute une colonne,
+pourquoi une comparaison sert à filtrer — s'éclaire dès qu'on a vu ces
+mécanismes sur un simple tableau de nombres.
 
 * Définir une fonction
 
@@ -147,6 +169,18 @@ print(math.log(2500))                   # logarithme népérien
 print(math.sqrt(144))
 #+END_SRC
 
+Un point de vocabulaire utile pour la suite : =statistics.mean= se lit
+« la fonction =mean= du module =statistics= ». Le point sert ici à naviguer
+dans un module, comme il servait en séance 2 à appeler une méthode d'objet.
+C'est la même notation pour deux idées voisines — « ce qui appartient à ».
+
+Notez surtout que =statistics.stdev= calcule l'écart-type *d'échantillon*,
+celui qui divise par /n−1/, et non l'écart-type de population
+(=statistics.pstdev=). L'écart est négligeable sur cinq mille observations et
+franchement visible sur sept. Vérifier quelle convention adopte une fonction
+avant de publier un chiffre est un réflexe qui vous évitera des surprises —
+et il vaut pour toutes les bibliothèques, pandas compris.
+
 Trois formes d'import coexistent. =import math= charge le module et impose de
 préfixer (=math.log=). =from math import log= importe un seul nom, utilisable
 sans préfixe. =import pandas as pd= charge sous un alias — c'est la forme que
@@ -240,6 +274,17 @@ def ecart_relatif(valeur, reference):
 print(ecart_relatif(1980, 2450))
 #+END_SRC
 
+Les deux fonctions calculent rigoureusement la même chose. La première oblige
+à remonter au code pour savoir ce qu'elle fait et dans quel ordre passer les
+arguments ; la seconde le dit d'elle-même. Le coût de la clarté s'est limité à
+quelques secondes de frappe, une fois.
+
+Un dernier conseil, qui vous servira surtout dans le projet : quand une
+fonction devient longue, demandez-vous si elle ne fait pas deux choses. Une
+fonction qui « nettoie les données et calcule la moyenne » gagne presque
+toujours à devenir deux fonctions — parce qu'on voudra un jour nettoyer sans
+calculer la moyenne.
+
 * Première approche de NumPy
 
 *NumPy* fournit le =array=, un tableau de nombres sur lequel les opérations
@@ -260,6 +305,24 @@ print(salaires.std())
 print(np.median(salaires))
 #+END_SRC
 
+Comparez avec la séance 2. Pour augmenter tous les salaires de 2 %, il
+fallait une boucle et un accumulateur ; ici, =salaires * 1.02= suffit.
+L'opération s'applique d'un coup à tous les éléments : c'est la
+*vectorisation*, et c'est le trait qui distingue un tableau NumPy d'une liste.
+Sur une liste ordinaire, =* 1.02= aurait échoué — et =* 3= aurait fait quelque
+chose de tout différent, en répétant la liste trois fois.
+
+Le gain n'est pas seulement d'écriture. Les boucles Python sont lentes ; les
+opérations NumPy s'exécutent en code compilé, souvent cent fois plus vite. Sur
+sept salaires, cela n'a aucune importance. Sur les centaines de milliers de
+lignes d'une enquête Emploi, c'est la différence entre une seconde et deux
+minutes — et c'est la raison pour laquelle pandas repose sur NumPy.
+
+Une réserve utile : =.mean()= et =.std()= sont des méthodes du tableau, mais
+=np.median()= est une fonction du module. Cette incohérence est un héritage
+historique, elle n'a pas de logique — quand un doute survient, la
+documentation tranche plus vite que l'intuition.
+
 Avec une liste, =salaires * 1.02= aurait échoué : c'est le tableau NumPy qui
 donne un sens à l'opération terme à terme. C'est ce qu'on appelle la
 *vectorisation* — plus court à écrire, et bien plus rapide.
@@ -278,6 +341,16 @@ print(masque)
 print(salaires[masque])           # on ne garde que les « True »
 print(masque.mean())              # la moyenne d'un booléen est une PART
 #+END_SRC
+
+Détaillons la dernière ligne, car elle sert constamment. En Python, =True=
+vaut 1 et =False= vaut 0 dans un calcul. La moyenne d'un tableau de booléens
+est donc le nombre de =True= divisé par l'effectif : une *proportion*. Écrire
+=(salaires < 2100).mean()= répond en une expression à la question « quelle
+part de l'échantillon gagne moins de 2 100 € ? ».
+
+C'est exactement ce que vous écrirez en pandas dès la séance prochaine, sous
+la forme =(df["salaire"] < 2100).mean()=. La syntaxe ne changera pas d'un
+caractère : seul le tableau NumPy devient une colonne de DataFrame.
 
 La dernière ligne mérite d'être retenue : la moyenne d'un tableau de booléens
 est la *proportion* de valeurs vraies. C'est le moyen le plus court de

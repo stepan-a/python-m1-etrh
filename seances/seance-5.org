@@ -24,7 +24,32 @@ histogramme construit sur des salaires saisis en annuel ne montre rien, et une
 moyenne calculée sur des âges à 999 ans est fausse sans prévenir. Le nettoyage
 n'est pas une corvée préalable à l'analyse, il en fait partie.
 
-# TODO(rédaction) : introduction développée, sur le modèle de la séance 1.
+Cette séance rassemble tout le reste : ce qu'on fait *avant* de calculer, et
+ce qu'on fait *après* avoir calculé.
+
+Avant, il y a le nettoyage. C'est la partie du travail dont on ne parle jamais
+dans les manuels et qui occupe, dans la pratique, la moitié du temps d'une
+étude. Les données réelles arrivent avec des non-réponses, des codages qui
+changent d'une source à l'autre, des doublons de collecte et des erreurs de
+saisie. Aucune de ces anomalies n'empêche un calcul d'aboutir : elles le font
+seulement aboutir à un résultat faux, avec la même assurance qu'un résultat
+juste. Le nettoyage n'est donc pas un préalable ennuyeux à l'analyse, c'est le
+moment où l'on décide ce que les données ont le droit de dire — et chacune de
+ces décisions se documente.
+
+Après, il y a la restitution. Un graphique n'est pas une décoration : c'est
+souvent le seul moyen de voir ce qu'un tableau de chiffres dissimule — une
+distribution asymétrique, une relation non linéaire, un groupe aberrant. Et
+une régression, même modeste, permet de passer d'une comparaison brute
+(« les femmes gagnent moins ») à une comparaison à caractéristiques
+comparables (« l'écart subsiste à diplôme, expérience et temps de travail
+donnés »). C'est ce déplacement qui fait la valeur ajoutée de l'économiste, et
+c'est ce qu'on attendra de votre projet.
+
+L'ordre du jour reflète cette logique : on nettoie, on représente, on estime.
+Représenter avant de nettoyer produirait des graphiques illisibles — un
+histogramme dont l'axe s'étire jusqu'à 66 000 € à cause de quinze saisies
+erronées ne montre plus rien du tout.
 
 * Nettoyer les données
 
@@ -69,6 +94,18 @@ pas sur un groupe.
 # La non-réponse est-elle liée au diplôme ? Si oui, supprimer biaiserait.
 brut.groupby("diplome")["salaire_net_mensuel"].apply(lambda s: s.isna().mean() * 100).round(1)
 #+END_SRC
+
+Les taux de non-réponse sont voisins d'un diplôme à l'autre : supprimer les
+lignes concernées ne déformera donc pas la structure de l'échantillon. Si au
+contraire la non-réponse s'était concentrée sur les hauts diplômes — ou, cas
+classique dans les enquêtes de revenus, sur les hauts salaires — la
+supprimer aurait biaisé toutes les moyennes vers le bas, silencieusement.
+
+C'est le raisonnement qui compte ici, pas la commande. Vérifier *à quoi
+ressemblent* les observations qu'on s'apprête à écarter, avant de les écarter,
+devrait être un réflexe. Le =lambda= de la ligne ci-dessus est simplement une
+fonction écrite sans lui donner de nom, pratique quand on ne s'en sert qu'une
+fois.
 
 ** Les codages incohérents
 
@@ -245,6 +282,21 @@ plt.legend()
 plt.grid(alpha=0.3)
 plt.show()
 #+END_SRC
+
+Deux remarques, l'une technique, l'autre économique.
+
+Techniquement, l'axe des abscisses est reconstruit à la main :
+=annee + (num_trimestre - 1) / 4= place le premier trimestre de 2020 en
+2020,0 et le quatrième en 2020,75. Sans cette conversion, les quatre
+trimestres d'une même année se superposeraient au même point.
+
+Économiquement, le graphique dit deux choses d'un coup. Le chômage des jeunes
+suit fidèlement celui de l'ensemble — mêmes retournements, mêmes dates — mais
+il en amplifie systématiquement l'amplitude, à un niveau deux à trois fois
+supérieur. Les jeunes ne subissent pas un chômage de nature différente : ils
+subissent le même, avec un effet de levier. C'est le genre de lecture qu'on
+attend de vous dans le projet, et qu'aucun tableau de chiffres ne suggère
+aussi vite qu'une courbe.
 
 *Exercice 5.2* /(socle)/ — Tracez un histogramme des salaires des femmes et
 des hommes sur le même graphique, à temps complet, avec =alpha=0.5= pour voir
