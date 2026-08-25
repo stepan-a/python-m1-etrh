@@ -1,0 +1,685 @@
+#+TITLE: Séance 1 — Prise en main et fondamentaux
+#+SUBTITLE: Introduction à Python — M1 Économie du travail et ressources humaines
+#+AUTHOR: Stéphane Adjemian
+#+DATE: 2026-2027
+#+LANGUAGE: fr
+#+OPTIONS: toc:2 num:t ^:nil
+
+* Avant de commencer
+
+Ce document est un /notebook/ : un cahier qui mélange du texte, du code et
+les résultats de ce code. Vous n'avez rien à installer — tout s'exécute dans
+votre navigateur.
+
+Deux choses à retenir tout de suite :
+
+- Pour exécuter une cellule de code, cliquez dedans puis appuyez sur
+  *Maj + Entrée*.
+- Votre travail est enregistré dans votre navigateur. Il survit à un
+  rafraîchissement de la page, mais pas à un changement d'ordinateur :
+  téléchargez votre notebook (menu /File → Download/) si vous voulez le
+  conserver ou le rendre.
+
+Les exercices sont marqués *socle* ou *bonus*. Le socle est à faire par tout
+le monde ; le bonus est là pour ceux qui vont plus vite. Personne n'est en
+retard s'il ne fait que le socle.
+
+Objectifs de la séance : écrire vos premières lignes de Python, comprendre ce
+qu'est une variable et un type, et calculer deux grandeurs qui reviendront
+tout au long du cours — un salaire net et un taux de croissance.
+
+* Pourquoi Python pour un économiste du travail ?
+
+Vous savez déjà faire des statistiques descriptives. La question n'est donc
+pas /ce/ que Python calcule, mais /pourquoi/ passer par du code plutôt que
+par un tableur.
+
+*La reproductibilité.* Dans un tableur, une analyse est une suite de gestes :
+un clic ici, un tri là, une formule recopiée jusqu'en bas. Six mois plus tard,
+personne — pas même vous — ne peut dire exactement ce qui a été fait. Un
+script, lui, /est/ la description exacte de l'analyse. On le relit, on le
+corrige, on le relance sur des données actualisées, on l'envoie à un collègue
+qui obtient le même résultat. C'est ce qu'on attend aujourd'hui d'un mémoire
+comme d'un rapport d'étude.
+
+*Le passage à l'échelle.* Un tableur devient pénible au-delà de quelques
+dizaines de milliers de lignes. L'enquête Emploi en compte plusieurs
+centaines de milliers par trimestre.
+
+*L'écosystème.* Python est gratuit, installé partout, et dispose de
+bibliothèques matures pour charger, nettoyer, décrire, représenter et
+modéliser des données.
+
+Faut-il pour autant abandonner les autres outils ? Non. Le tableur reste
+excellent pour regarder rapidement un petit fichier. Stata garde une longueur
+d'avance sur certaines méthodes d'économétrie appliquée, et R sur la
+statistique. Ce qui distingue Python, c'est sa polyvalence : le même langage
+sert à récupérer les données, les traiter, les analyser et produire le
+rapport. C'est aussi, très concrètement, la compétence la plus demandée sur
+le marché du travail des économistes appliqués.
+
+* Le notebook : cellules et exécution
+
+Un notebook est une suite de *cellules*. Il y en a deux sortes : les cellules
+de texte, comme celle que vous lisez, et les cellules de code, reconnaissables
+à leur fond grisé.
+
+Exécutez la cellule ci-dessous avec *Maj + Entrée*.
+
+#+BEGIN_SRC python
+print("Bonjour ! Ceci est ma première ligne de Python.")
+#+END_SRC
+
+Il s'est passé trois choses. Python a lu la ligne, il a exécuté la fonction
+=print=, et il a affiché le résultat juste en dessous de la cellule. Une
+*fonction* est une instruction qui porte un nom et à qui on donne des choses
+entre parenthèses ; =print= est celle qui affiche.
+
+Le texte entre guillemets s'appelle une *chaîne de caractères*. Les
+guillemets ne s'affichent pas : ils servent à dire à Python « ceci est du
+texte, pas une instruction ».
+
+Un point d'attention pour la suite : *l'ordre d'exécution est celui dans
+lequel vous exécutez les cellules*, pas celui dans lequel elles apparaissent.
+Si un résultat vous surprend, le premier réflexe est de tout réexécuter
+depuis le début (/Run → Restart Kernel and Run All Cells/).
+
+#+BEGIN_SRC python
+# Une ligne qui commence par un dièse est un commentaire :
+# Python l'ignore complètement. Les commentaires servent à expliquer
+# le « pourquoi » du code à celui qui le lira — souvent vous-même.
+
+print("Les commentaires ne s'affichent pas.")   # on peut aussi commenter ici
+#+END_SRC
+
+* Les variables
+
+Une *variable* est un nom auquel on attache une valeur, pour pouvoir la
+réutiliser. Le signe ~=~ ne signifie pas « égal » au sens mathématique : il
+signifie « range cette valeur sous ce nom ».
+
+#+BEGIN_SRC python
+salaire_brut = 2500
+taux_cotisation = 0.22
+
+# On peut ensuite calculer à partir de ces noms.
+cotisations = salaire_brut * taux_cotisation
+salaire_net = salaire_brut - cotisations
+
+print(salaire_net)
+#+END_SRC
+
+Lisez la troisième ligne de droite à gauche : Python calcule d'abord
+=salaire_brut * taux_cotisation=, puis range le résultat sous le nom
+=cotisations=. C'est pour cette raison qu'une ligne comme =x = x + 1= a un
+sens en programmation alors qu'elle n'en a aucun en mathématiques.
+
+Une variable peut être réaffectée : sa valeur change, et c'est la dernière
+qui compte.
+
+#+BEGIN_SRC python
+salaire_brut = 2500
+print(salaire_brut)
+
+salaire_brut = 2800     # augmentation : l'ancienne valeur est perdue
+print(salaire_brut)
+#+END_SRC
+
+** Nommer ses variables
+
+Les règles imposées par Python sont peu nombreuses : un nom commence par une
+lettre ou un tiret bas, ne contient ni espace ni accent ni tiret ordinaire, et
+distingue les majuscules des minuscules (=salaire= et =Salaire= sont deux
+variables différentes).
+
+La règle qui compte vraiment n'est pas imposée par Python mais par le bon
+sens : *un nom doit dire ce que la variable contient*. =s=, =x1= et =truc=
+sont des noms légaux et de mauvais noms. =salaire_net_mensuel= est long, et
+c'est très bien : on écrit un nom une fois, on le lit dix fois. La convention
+en Python est de tout écrire en minuscules, les mots séparés par des tirets
+bas.
+
+#+BEGIN_SRC python
+# Lisible
+salaire_horaire = 12.5
+heures_hebdomadaires = 35
+salaire_hebdomadaire = salaire_horaire * heures_hebdomadaires
+print(salaire_hebdomadaire)
+
+# Le même calcul, illisible — et pourtant parfaitement valide
+a = 12.5
+b = 35
+c = a * b
+print(c)
+#+END_SRC
+
+*Exercice 1.1* /(socle)/ — Un salarié travaille 28 heures par semaine, payées
+14,20 € de l'heure. Créez trois variables aux noms parlants et affichez son
+salaire hebdomadaire.
+
+#+BEGIN_SRC python :corrige t
+salaire_horaire = 14.20
+heures_hebdomadaires = 28
+salaire_hebdomadaire = salaire_horaire * heures_hebdomadaires
+
+print(salaire_hebdomadaire)
+#+END_SRC
+
+* Les types de données
+
+Toute valeur en Python a un *type*. Le type décide de ce qu'on a le droit de
+faire avec la valeur. Quatre types suffisent pour aujourd'hui.
+
+#+BEGIN_SRC python
+age = 34                       # int   : nombre entier
+salaire = 2187.50              # float : nombre décimal (le séparateur est un POINT)
+diplome = "Master"             # str   : chaîne de caractères (string)
+temps_plein = True             # bool  : booléen, True ou False
+
+# La fonction type() révèle le type d'une valeur.
+print(type(age))
+print(type(salaire))
+print(type(diplome))
+print(type(temps_plein))
+#+END_SRC
+
+Trois pièges qui vous coûteront du temps si vous ne les repérez pas
+maintenant.
+
+Le *séparateur décimal est le point*, jamais la virgule : =2187.50= et non
+=2187,50=. C'est une source d'erreurs constante quand on importe des données
+françaises, et nous y reviendrons en séance 4.
+
+Les booléens =True= et =False= prennent une *majuscule*, et ne sont pas entre
+guillemets. =True= est une valeur logique ; ="True"= est un morceau de texte.
+
+Enfin, =2500= et ="2500"= sont deux choses différentes : un nombre et un
+texte. La cellule suivante le montre.
+
+#+BEGIN_SRC python
+# Avec des nombres, + additionne.
+print(2500 + 100)
+
+# Avec du texte, + colle bout à bout. C'est la « concaténation ».
+print("2500" + "100")
+
+# Et mélanger les deux est une erreur. Décommentez pour voir le message :
+# print("2500" + 100)
+#+END_SRC
+
+** Convertir d'un type à l'autre
+
+On passe d'un type à l'autre avec =int()=, =float()= et =str()=. Ce geste est
+constant dès qu'on manipule des données réelles, où les nombres arrivent
+souvent sous forme de texte.
+
+#+BEGIN_SRC python
+salaire_texte = "2500"          # du texte, tel qu'il sortirait d'un fichier
+
+salaire_nombre = int(salaire_texte)
+print(salaire_nombre + 100)     # maintenant l'addition a du sens
+
+# Dans l'autre sens :
+annee = 2026
+print("Données de l'année " + str(annee))
+
+# int() tronque, il n'arrondit pas — attention.
+print(int(2187.90))
+#+END_SRC
+
+*Exercice 1.2* /(socle)/ — La variable =prime_texte= ci-dessous contient une
+prime sous forme de texte. Convertissez-la, ajoutez-la au salaire, et
+affichez le total.
+
+#+BEGIN_SRC python
+prime_texte = "450"
+salaire = 2187.50
+#+END_SRC
+
+#+BEGIN_SRC python :corrige t
+prime_texte = "450"
+salaire = 2187.50
+
+prime = float(prime_texte)
+total = salaire + prime
+
+print(total)
+#+END_SRC
+
+* Les opérations
+
+Python calcule comme une calculatrice, avec trois opérateurs en plus.
+
+#+BEGIN_SRC python
+salaire_annuel = 2187.50 * 12
+
+print(salaire_annuel)           # multiplication
+print(salaire_annuel / 52)      # division  -> toujours un décimal
+print(salaire_annuel // 1000)   # division entière -> le quotient, sans reste
+print(salaire_annuel % 1000)    # modulo -> le reste de la division
+print(1.02 ** 10)               # puissance -> 2 % par an pendant 10 ans
+#+END_SRC
+
+Les quatre opérations usuelles s'écrivent =+=, =-=, =*= et =/=. Attention :
+la division =/= donne *toujours* un décimal, même quand elle tombe juste
+(=8 / 2= vaut =4.0=, pas =4=).
+
+Trois opérateurs sont plus spécifiques. La division entière =//= ne garde que
+la partie entière du quotient. Le modulo =%= donne le *reste* : il sert à
+tester la divisibilité, par exemple pour repérer les années de recensement.
+La puissance =**= élève à un exposant, y compris fractionnaire — c'est ainsi
+qu'on calcule un taux de croissance annuel moyen.
+
+Les priorités sont celles des mathématiques : la multiplication et la division
+passent avant l'addition et la soustraction, et les parenthèses tranchent.
+
+#+BEGIN_SRC python
+# Sans parenthèses, la multiplication passe d'abord.
+print(1500 + 500 * 0.22)
+
+# Avec parenthèses, la somme est calculée d'abord.
+print((1500 + 500) * 0.22)
+#+END_SRC
+
+La fonction =round()= arrondit, ce qui est indispensable dès qu'on affiche un
+montant.
+
+#+BEGIN_SRC python
+salaire_net = 2500 * (1 - 0.22)
+print(salaire_net)
+print(round(salaire_net, 2))    # 2 décimales
+print(round(salaire_net))       # à l'euro
+#+END_SRC
+
+*Exercice 1.3* /(socle)/ — Le SMIC brut mensuel est de 1 801,80 € pour 35
+heures par semaine. Calculez le SMIC *horaire* brut, arrondi au centime.
+(Indication : une année compte 52 semaines, un mois vaut donc 52/12 semaines.)
+
+#+BEGIN_SRC python :corrige t
+smic_mensuel_brut = 1801.80
+heures_hebdomadaires = 35
+semaines_par_mois = 52 / 12
+
+heures_mensuelles = heures_hebdomadaires * semaines_par_mois
+smic_horaire = smic_mensuel_brut / heures_mensuelles
+
+print(round(smic_horaire, 2))
+#+END_SRC
+
+*Exercice 1.4* /(bonus)/ — Un salarié gagne 1 900 € nets par mois. Son salaire
+augmente de 1,8 % par an. Combien gagnera-t-il dans 10 ans ? Et de combien
+son salaire aura-t-il augmenté en pourcentage sur la période ?
+
+#+BEGIN_SRC python :corrige t
+salaire_initial = 1900
+taux_annuel = 0.018
+annees = 10
+
+salaire_final = salaire_initial * (1 + taux_annuel) ** annees
+hausse_totale = (salaire_final / salaire_initial - 1) * 100
+
+print(round(salaire_final, 2))
+print(round(hausse_totale, 1))
+#+END_SRC
+
+* Comparer : les booléens
+
+Comparer deux valeurs produit un booléen, =True= ou =False=. C'est le
+mécanisme sur lequel reposera tout le filtrage de données de la séance 4 :
+« garder les femmes », « garder les salaires supérieurs au SMIC » sont des
+comparaisons.
+
+#+BEGIN_SRC python
+salaire = 2187.50
+smic = 1426.30
+
+print(salaire > smic)      # strictement supérieur
+print(salaire < smic)      # strictement inférieur
+print(salaire >= smic)     # supérieur ou égal
+print(salaire == 2187.50)  # ÉGAL : deux signes « = »
+print(salaire != smic)     # différent
+#+END_SRC
+
+Retenez la distinction entre ~=~ et ~==~ : un seul signe *affecte* une valeur
+à une variable, deux signes *comparent* deux valeurs. C'est l'erreur de
+débutant la plus fréquente, et elle est silencieuse.
+
+On combine les conditions avec =and=, =or= et =not=.
+
+#+BEGIN_SRC python
+salaire = 2187.50
+temps_plein = True
+
+# and : les deux conditions doivent être vraies
+print(salaire > 2000 and temps_plein)
+
+# or : au moins une des deux
+print(salaire > 3000 or temps_plein)
+
+# not : inverse
+print(not temps_plein)
+#+END_SRC
+
+*Exercice 1.5* /(socle)/ — Un salarié gagne 1 380 € nets pour un temps plein.
+Écrivez une comparaison qui vérifie s'il est payé en dessous du SMIC net
+(1 426,30 €), et affichez le résultat.
+
+#+BEGIN_SRC python :corrige t
+salaire = 1380
+smic_net = 1426.30
+
+sous_le_smic = salaire < smic_net
+
+print(sous_le_smic)
+#+END_SRC
+
+* Afficher proprement
+
+=print= accepte plusieurs valeurs séparées par des virgules, et les sépare
+d'un espace à l'affichage. C'est le moyen le plus simple de mélanger texte et
+nombres.
+
+#+BEGIN_SRC python
+salaire_net = 2187.50
+print("Salaire net :", salaire_net, "euros")
+#+END_SRC
+
+Il existe une forme plus lisible dès que le message se complique : la
+*f-string*. On écrit un =f= devant le guillemet ouvrant, et l'on place les
+variables entre accolades, à l'endroit exact où elles doivent apparaître.
+
+#+BEGIN_SRC python
+salaire_brut = 2500
+salaire_net = 1950.0
+taux = (1 - salaire_net / salaire_brut) * 100
+
+print(f"Brut : {salaire_brut} € — net : {salaire_net} €")
+
+# On peut mettre en forme directement dans les accolades :
+#   :.1f  -> un chiffre après la virgule
+#   :.0f  -> aucun, arrondi
+print(f"Les cotisations représentent {taux:.1f} % du brut.")
+print(f"Soit {salaire_brut - salaire_net:.0f} € par mois.")
+#+END_SRC
+
+Les f-strings acceptent un calcul entre les accolades, comme le montre la
+dernière ligne. Utilisez-les : elles rendent le code bien plus lisible que
+les concaténations, et éviteront de nombreuses erreurs de type.
+
+*Exercice 1.6* /(socle)/ — Reprenez le SMIC horaire de l'exercice 1.3 et
+affichez-le avec une f-string, sous la forme :
+=Le SMIC horaire brut est de 11.88 € (base 35 h).=
+
+#+BEGIN_SRC python :corrige t
+smic_mensuel_brut = 1801.80
+heures_hebdomadaires = 35
+heures_mensuelles = heures_hebdomadaires * 52 / 12
+smic_horaire = smic_mensuel_brut / heures_mensuelles
+
+print(f"Le SMIC horaire brut est de {smic_horaire:.2f} € "
+      f"(base {heures_hebdomadaires} h).")
+#+END_SRC
+
+* Demander une valeur à l'utilisateur
+
+La fonction =input()= met le programme en pause, affiche un message, et
+attend que l'on tape quelque chose.
+
+#+BEGIN_SRC python :skip t
+prenom = input("Quel est votre prénom ? ")
+print(f"Bonjour {prenom} !")
+#+END_SRC
+
+Un point crucial : =input()= renvoie *toujours* du texte, même si l'on tape
+des chiffres. Pour calculer avec la saisie, il faut la convertir — d'où le
+=float()= ci-dessous, sans lequel la multiplication échouerait.
+
+#+BEGIN_SRC python :skip t
+brut_texte = input("Salaire brut mensuel (en euros) : ")
+brut = float(brut_texte)
+
+net = brut * (1 - 0.22)
+print(f"Salaire net estimé : {net:.2f} €")
+#+END_SRC
+
+Ces deux cellules portent une étiquette qui les exclut des exécutions
+automatiques du cours : sans clavier pour répondre, =input()= attendrait
+indéfiniment. Exécutez-les à la main, elles fonctionnent parfaitement.
+
+Dans la pratique, vous utiliserez très peu =input()= : les données viendront
+de fichiers, pas du clavier. Retenez surtout la leçon générale — *une valeur
+qui vient de l'extérieur arrive sous forme de texte et doit être convertie*.
+C'est exactement le problème que nous retrouverons en séance 4 avec les
+fichiers CSV.
+
+* Application : du brut au net
+
+Assemblons ce qui précède sur un cas concret. Le passage du brut au net est
+une cascade de prélèvements : les cotisations salariales d'abord, le
+prélèvement à la source ensuite.
+
+#+BEGIN_SRC python
+# Ordres de grandeur pour un salarié non cadre du privé.
+salaire_brut = 2500.00
+taux_cotisations = 0.22       # cotisations salariales
+taux_prelevement = 0.05       # prélèvement à la source
+
+cotisations = salaire_brut * taux_cotisations
+net_avant_impot = salaire_brut - cotisations
+
+impot = net_avant_impot * taux_prelevement
+net_a_payer = net_avant_impot - impot
+
+print(f"Brut               : {salaire_brut:8.2f} €")
+print(f"Cotisations        : {cotisations:8.2f} €")
+print(f"Net avant impôt    : {net_avant_impot:8.2f} €")
+print(f"Prélèvement source : {impot:8.2f} €")
+print(f"Net à payer        : {net_a_payer:8.2f} €")
+print()
+print(f"Taux de prélèvement global : {(1 - net_a_payer / salaire_brut) * 100:.1f} %")
+#+END_SRC
+
+Deux remarques. Le =8= dans ={cotisations:8.2f}= réserve huit caractères pour
+le nombre, ce qui aligne la colonne des montants — un détail qui rend un
+résultat lisible.
+
+Surtout, notez que l'impôt porte sur le net avant impôt, pas sur le brut :
+les prélèvements ne s'additionnent pas, ils se composent. C'est pour cela que
+le taux global n'est pas 22 + 5 = 27 %. Cette distinction entre effets
+additifs et multiplicatifs revient constamment en économie, et le code oblige
+à la trancher explicitement.
+
+*Exercice 1.7* /(socle)/ — Un cadre gagne 4 200 € brut. Ses cotisations
+salariales représentent 25 % du brut, et son taux de prélèvement à la source
+est de 11 %. Calculez et affichez son net à payer, ainsi que son taux de
+prélèvement global.
+
+#+BEGIN_SRC python :corrige t
+salaire_brut = 4200.00
+taux_cotisations = 0.25
+taux_prelevement = 0.11
+
+net_avant_impot = salaire_brut * (1 - taux_cotisations)
+net_a_payer = net_avant_impot * (1 - taux_prelevement)
+taux_global = (1 - net_a_payer / salaire_brut) * 100
+
+print(f"Net à payer : {net_a_payer:.2f} €")
+print(f"Taux de prélèvement global : {taux_global:.1f} %")
+#+END_SRC
+
+*Exercice 1.8* /(bonus)/ — Comparez le cadre de l'exercice précédent au
+salarié à 2 500 € du cours. Lequel conserve la plus grande part de son brut ?
+Affichez l'écart en points de pourcentage.
+
+#+BEGIN_SRC python :corrige t
+# Salarié non cadre
+net_non_cadre = 2500 * (1 - 0.22) * (1 - 0.05)
+taux_non_cadre = (1 - net_non_cadre / 2500) * 100
+
+# Cadre
+net_cadre = 4200 * (1 - 0.25) * (1 - 0.11)
+taux_cadre = (1 - net_cadre / 4200) * 100
+
+print(f"Non cadre : {taux_non_cadre:.1f} % de prélèvement")
+print(f"Cadre     : {taux_cadre:.1f} % de prélèvement")
+print(f"Écart     : {taux_cadre - taux_non_cadre:.1f} points")
+#+END_SRC
+
+* Application : les taux de croissance
+
+Le second calcul qui reviendra sans cesse est le taux de croissance. Sa
+définition est simple, mais deux erreurs sont si fréquentes qu'il vaut la
+peine de les traiter dès maintenant.
+
+#+BEGIN_SRC python
+# Salaire net mensuel moyen dans le privé (ordres de grandeur INSEE).
+salaire_2015 = 2250
+salaire_2024 = 2735
+
+# Taux de croissance sur l'ensemble de la période, en pourcentage.
+croissance_totale = (salaire_2024 / salaire_2015 - 1) * 100
+print(f"Croissance 2015-2024 : {croissance_totale:.1f} %")
+#+END_SRC
+
+Première erreur à éviter : diviser cette croissance totale par le nombre
+d'années pour obtenir une croissance annuelle. Les taux de croissance se
+*composent*, ils ne s'additionnent pas. Le taux annuel moyen est le taux
+constant qui, appliqué chaque année, mènerait du point de départ au point
+d'arrivée — c'est-à-dire une racine, donc une puissance fractionnaire.
+
+#+BEGIN_SRC python
+annees = 2024 - 2015
+
+# FAUX : la moyenne arithmétique de la croissance totale
+faux_taux = croissance_totale / annees
+
+# JUSTE : le taux de croissance annuel moyen (géométrique)
+taux_annuel = ((salaire_2024 / salaire_2015) ** (1 / annees) - 1) * 100
+
+print(f"Approximation naïve : {faux_taux:.2f} % par an")
+print(f"Taux annuel moyen   : {taux_annuel:.2f} % par an")
+#+END_SRC
+
+L'écart paraît faible ici parce que les taux sont petits ; il devient
+considérable sur des séries longues ou volatiles.
+
+Seconde erreur : confondre pourcentage et point de pourcentage. Si le taux de
+chômage passe de 8 % à 7 %, il a baissé d'*un point*, mais de *12,5 %* en
+valeur relative. Les deux énoncés sont vrais et ne disent pas la même chose.
+
+#+BEGIN_SRC python
+chomage_debut = 8.0
+chomage_fin = 7.0
+
+variation_points = chomage_fin - chomage_debut
+variation_relative = (chomage_fin / chomage_debut - 1) * 100
+
+print(f"Variation : {variation_points:+.1f} point de pourcentage")
+print(f"Variation : {variation_relative:+.1f} % en valeur relative")
+#+END_SRC
+
+Le =+= dans ={variation_points:+.1f}= force l'affichage du signe, ce qui
+évite toute ambiguïté sur le sens d'une variation.
+
+*Exercice 1.9* /(socle)/ — Le salaire net moyen d'un secteur passe de 1 980 €
+en 2019 à 2 310 € en 2024. Calculez la croissance totale sur la période, puis
+le taux de croissance annuel moyen. Affichez les deux avec une décimale.
+
+#+BEGIN_SRC python :corrige t
+salaire_debut = 1980
+salaire_fin = 2310
+annees = 2024 - 2019
+
+croissance_totale = (salaire_fin / salaire_debut - 1) * 100
+taux_annuel = ((salaire_fin / salaire_debut) ** (1 / annees) - 1) * 100
+
+print(f"Croissance totale : {croissance_totale:.1f} %")
+print(f"Taux annuel moyen : {taux_annuel:.1f} % par an")
+#+END_SRC
+
+*Exercice 1.10* /(bonus)/ — Sur la même période, les prix ont augmenté de
+14,2 % au total. Le salaire du secteur a-t-il gagné ou perdu en pouvoir
+d'achat ? Calculez la croissance du salaire *réel* et concluez avec une
+f-string.
+
+#+BEGIN_SRC python :corrige t
+croissance_nominale = 2310 / 1980        # facteur, pas pourcentage
+croissance_prix = 1.142
+
+# Le salaire réel est le salaire nominal déflaté par les prix : les
+# facteurs se divisent, les pourcentages ne se soustraient pas.
+croissance_reelle = (croissance_nominale / croissance_prix - 1) * 100
+
+print(f"Pouvoir d'achat : {croissance_reelle:+.1f} % sur la période")
+print(f"Le salaire réel a {'progressé' if croissance_reelle > 0 else 'reculé'}.")
+#+END_SRC
+
+* Mini-projet : fiche de paie simplifiée
+
+Rassemblez la séance en un seul programme. Écrivez, dans la cellule
+ci-dessous, un programme qui :
+
+1. définit le salaire brut, le taux de cotisations et le taux de prélèvement
+   à la source dans des variables clairement nommées ;
+2. calcule les cotisations, le net avant impôt, l'impôt et le net à payer ;
+3. affiche une fiche de paie alignée, à la manière de l'exemple du cours ;
+4. affiche le salaire net annuel, prime de fin d'année comprise — comptez un
+   treizième mois ;
+5. indique enfin si le salaire net mensuel dépasse le salaire net médian
+   français, que l'on prendra à 2 100 €.
+
+/Bonus/ : faites en sorte que le programme demande le salaire brut à
+l'utilisateur avec =input()=, plutôt que de le fixer en dur.
+
+#+BEGIN_SRC python :corrige t
+# --- Paramètres -------------------------------------------------------
+salaire_brut = 2500.00
+taux_cotisations = 0.22
+taux_prelevement = 0.05
+salaire_median = 2100
+
+# --- Calculs ----------------------------------------------------------
+cotisations = salaire_brut * taux_cotisations
+net_avant_impot = salaire_brut - cotisations
+impot = net_avant_impot * taux_prelevement
+net_a_payer = net_avant_impot - impot
+
+net_annuel = net_a_payer * 13          # 12 mois + treizième mois
+
+# --- Affichage --------------------------------------------------------
+print("=" * 38)
+print("           FICHE DE PAIE")
+print("=" * 38)
+print(f"Salaire brut       : {salaire_brut:9.2f} €")
+print(f"Cotisations        : {-cotisations:9.2f} €")
+print(f"Net avant impôt    : {net_avant_impot:9.2f} €")
+print(f"Prélèvement source : {-impot:9.2f} €")
+print("-" * 38)
+print(f"NET À PAYER        : {net_a_payer:9.2f} €")
+print("=" * 38)
+print(f"Net annuel (13 mois) : {net_annuel:.2f} €")
+
+if net_a_payer > salaire_median:
+    ecart = (net_a_payer / salaire_median - 1) * 100
+    print(f"Au-dessus du salaire médian de {ecart:.1f} %.")
+else:
+    ecart = (1 - net_a_payer / salaire_median) * 100
+    print(f"En dessous du salaire médian de {ecart:.1f} %.")
+#+END_SRC
+
+* Ce qu'il faut retenir
+
+- Une *variable* est un nom attaché à une valeur ; ~=~ affecte, ~==~ compare.
+- Toute valeur a un *type* : =int=, =float=, =str=, =bool=. Le séparateur
+  décimal est le point, et une valeur venue de l'extérieur arrive en texte.
+- Les *f-strings* (=f"… {variable:.2f} …"=) sont la bonne façon d'afficher un
+  résultat.
+- Les taux de croissance se *composent* : on passe par des puissances
+  fractionnaires, jamais par une division du taux total.
+- Un *point de pourcentage* n'est pas un *pourcentage*.
+
+La prochaine séance introduit les listes et les boucles : au lieu de traiter
+un salarié, nous en traiterons plusieurs milliers.
+
+*Avant de partir*, téléchargez votre notebook si vous voulez conserver votre
+travail : menu /File → Download/.

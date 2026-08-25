@@ -1,0 +1,118 @@
+# CI du cours « Introduction à Python » (M1 ETRH).
+#
+# Le runner est le même que celui du site (tag « stepan@puck », exécuteur
+# shell, sans image Docker). Outils requis sur le runner :
+#   - make, pandoc, rsync
+#   - python3 avec le module venv        (la CI construit sa propre .venv)
+#   - release-cli                        (uniquement pour les Releases sur tag)
+#
+# Installation unique de release-cli sur le runner :
+#   sudo curl -L -o /usr/local/bin/release-cli \
+#     https://gitlab.com/gitlab-org/release-cli/-/releases/permalink/latest/downloads/bin/release-cli-linux-amd64
+#   sudo chmod +x /usr/local/bin/release-cli
+
+stages:
+  - build
+  - verify
+  - deploy
+  - release
+
+variables:
+  # Racine servie par le vhost le-mans.adjemian.eu, sur puck, aux côtés des
+  # autres cours (croissance, micro-l2, séries-temporelles…).
+  # Le répertoire appartient à gitlab-runner, l'utilisateur sous lequel le
+  # service exécute les jobs : le rsync ci-dessous écrit donc sans sudo.
+  CIBLE: /puck/www/le-mans.adjemian.eu/python-m1-etrh
+
+# Construit les dix notebooks (5 séances + 5 corrigés) et le dossier servi.
+# On passe par la .venv du projet : elle fournit jupytext, jupyterlite et les
+# bibliothèques du cours dans les versions alignées sur Pyodide.
+notebooks:
+  stage: build
+  only:
+    - master@stepan/python-m1-etrh
+    - tags
+  tags:
+    - stepan@puck
+  script:
+    - make content
+    - test -f content/seance-1.ipynb
+    - test -f content/seance-5-corrige.ipynb
+    - test -f content/data/salaires.csv
+  artifacts:
+    paths:
+      - content/
+      - .venv/
+    expire_in: 1 day
+
+# Exécute les cinq corrigés dans l'arborescence exacte du site. C'est le
+# garde-fou de la source unique : un exercice dont la solution ne tourne plus
+# casse le pipeline, pas la séance.
+corriges:
+  stage: verify
+  only:
+    - master@stepan/python-m1-etrh
+    - tags
+  tags:
+    - stepan@puck
+  dependencies:
+    - notebooks
+  script:
+    - make check
+
+# Construit le site JupyterLite et le publie sous le-mans.adjemian.eu.
+# --delete est sans risque : le répertoire est dédié au cours, sur un vhost
+# distinct de celui du site personnel — aucun autre pipeline n'y écrit.
+site:
+  stage: deploy
+  only:
+    - master@stepan/python-m1-etrh
+  tags:
+    - stepan@puck
+  dependencies:
+    - notebooks
+  script:
+    - make lite
+    - test -f dist/index.html
+    - test -f dist/lite/lab/index.html
+    - mkdir -p "$CIBLE"
+    - rsync -a --delete dist/ "$CIBLE/"
+  environment:
+    name: production
+    url: https://le-mans.adjemian.eu/python-m1-etrh/
+
+# Sur un tag : archive hors ligne (notebooks construits + données + lanceur),
+# téléversée dans le Package Registry puis attachée à une Release.
+release-zip:
+  stage: release
+  only:
+    - tags
+  tags:
+    - stepan@puck
+  dependencies:
+    - notebooks
+  script:
+    - rm -rf cours-python-etrh
+    - mkdir cours-python-etrh
+    - cp -r content/*.ipynb content/data content/wheels cours-python-etrh/
+    - cp cours.py requirements.txt LISEZMOI.txt DONNEES.md cours-python-etrh/
+    - python3 -m zipfile -c cours-python-etrh.zip cours-python-etrh/
+    - |
+      curl --fail --silent --show-error \
+        --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
+        --upload-file cours-python-etrh.zip \
+        "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/cours-python-etrh/${CI_COMMIT_TAG}/cours-python-etrh.zip"
+  artifacts:
+    name: cours-python-etrh
+    paths:
+      - cours-python-etrh.zip
+    expire_in: 4 weeks
+  release:
+    tag_name: $CI_COMMIT_TAG
+    name: "Cours Python M1 ETRH $CI_COMMIT_TAG"
+    description: "Cours « Introduction à Python » prêt à l'emploi hors ligne. Télécharge cours-python-etrh.zip, dézippe-le, puis lance « python cours.py »."
+    assets:
+      links:
+        - name: "cours-python-etrh.zip"
+          url: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/cours-python-etrh/${CI_COMMIT_TAG}/cours-python-etrh.zip"
+          link_type: package

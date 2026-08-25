@@ -1,0 +1,400 @@
+#+TITLE: Séance 4 — Manipulation de données avec pandas
+#+SUBTITLE: Introduction à Python — M1 Économie du travail et ressources humaines
+#+AUTHOR: Stéphane Adjemian
+#+DATE: 2026-2027
+#+LANGUAGE: fr
+#+OPTIONS: toc:2 num:t ^:nil
+
+* Objectifs de la séance
+
+Jusqu'ici, les données tenaient dans une liste écrite à la main. À partir
+d'aujourd'hui, elles viennent d'un fichier et comptent des milliers de lignes.
+
+À l'issue de la séance, vous saurez :
+
+- charger un fichier CSV ou Excel dans un *DataFrame* ;
+- sélectionner des colonnes, filtrer des lignes, trier, créer des variables ;
+- produire des statistiques descriptives (=describe=, =mean=, =value_counts=) ;
+- agréger avec =groupby= : salaire moyen par diplôme, par sexe, par secteur.
+
+*Les données.* Le fichier =data/salaires.csv= décrit 5 000 salariés. Il est
+*simulé*, mais calibré pour que les faits stylisés soient les bons : le
+salaire médian, le rendement de l'éducation et l'écart femmes-hommes y sont
+aux ordres de grandeur français. Les microdonnées de l'enquête Emploi ne sont
+pas librement redistribuables — voir =DONNEES.md= pour le détail. Retenez que
+les résultats de cette séance illustrent des méthodes, ils ne démontrent pas
+des faits.
+
+# TODO(rédaction) : introduction développée, sur le modèle de la séance 1.
+
+* Charger les données
+
+#+BEGIN_SRC python
+import pandas as pd
+
+salaires = pd.read_csv("data/salaires.csv")
+
+salaires.head()
+#+END_SRC
+
+=pd= est l'alias conventionnel de pandas ; tout le monde l'écrit ainsi.
+=read_csv= lit le fichier et renvoie un *DataFrame* : un tableau à deux
+dimensions, avec des colonnes nommées et typées.
+
+Notez que la dernière ligne n'est pas un =print=. Dans un notebook, la
+dernière expression d'une cellule s'affiche automatiquement — et un DataFrame
+s'affiche sous forme de tableau, bien plus lisible.
+
+#+BEGIN_SRC python
+print(salaires.shape)      # (lignes, colonnes)
+print()
+print(salaires.columns.tolist())
+print()
+salaires.info()
+#+END_SRC
+
+=info()= est le premier réflexe devant un fichier inconnu : il donne le type
+de chaque colonne et le nombre de valeurs non manquantes. Regardez la ligne
+=salaire_net_mensuel= : elle compte moins d'observations que les autres. Ce
+fichier a des trous, comme toute enquête.
+
+** Lire un fichier Excel
+
+=read_excel= s'utilise exactement comme =read_csv=. Il demande une
+bibliothèque supplémentaire, =openpyxl=, qui n'est pas fournie d'origine dans
+le navigateur : la cellule suivante l'installe si nécessaire.
+
+#+BEGIN_SRC python
+# En ligne (Pyodide), openpyxl est installé depuis les fichiers livrés avec le
+# cours. En local, il est déjà présent : l'import de micropip échoue et on
+# passe simplement à la suite.
+#
+# Deux détails qui comptent. Le préfixe « emfs: » dit à micropip de lire le
+# fichier dans le système de fichiers du notebook — sans lui, un chemin
+# relatif serait cherché à côté de la page web, et pas ici. Et et_xmlfile
+# s'installe AVANT openpyxl, qui en dépend : dans l'autre sens, micropip
+# irait chercher la dépendance manquante sur Internet.
+try:
+    import micropip
+    await micropip.install("emfs:wheels/et_xmlfile-2.0.0-py3-none-any.whl")
+    await micropip.install("emfs:wheels/openpyxl-3.1.5-py2.py3-none-any.whl")
+except ImportError:
+    pass
+
+extrait = pd.read_excel("data/salaires-extrait.xlsx")
+extrait.head(3)
+#+END_SRC
+
+* Regarder les données
+
+#+BEGIN_SRC python
+salaires.head(3)        # les 3 premières lignes
+#+END_SRC
+
+#+BEGIN_SRC python
+salaires.describe()     # statistiques des colonnes numériques
+#+END_SRC
+
+#+BEGIN_SRC python
+# Pour une colonne qualitative, c'est value_counts qui renseigne.
+salaires["diplome"].value_counts()
+#+END_SRC
+
+=describe()= livre d'un coup effectif, moyenne, écart-type, minimum, quartiles
+et maximum. Lisez-le avec méfiance : ici, la colonne =age= a un maximum de
+999 et la colonne =salaire_net_mensuel= un maximum à cinq chiffres. Ce ne sont
+pas des salariés exceptionnels, ce sont des erreurs de saisie. Nous les
+traiterons en séance 5 ; retenez pour l'instant que =describe()= sert autant à
+*détecter les anomalies* qu'à décrire.
+
+#+BEGIN_SRC python
+# Une anomalie sautant aux yeux dès le premier value_counts :
+salaires["sexe"].value_counts()
+#+END_SRC
+
+Le sexe est codé de deux façons — ="Femme"= / ="Homme"= et ="F"= / ="H"= —
+parce que le fichier agrège des sources différentes. Toute statistique par
+sexe calculée en l'état serait fausse. Corrigeons-le tout de suite, la suite
+de la séance en dépend.
+
+#+BEGIN_SRC python
+salaires["sexe"] = salaires["sexe"].replace({"F": "Femme", "H": "Homme"})
+salaires["sexe"].value_counts()
+#+END_SRC
+
+*Exercice 4.1* /(socle)/ — Affichez le nombre de modalités distinctes de la
+colonne =secteur=, puis leur effectif, du plus fréquent au moins fréquent.
+
+#+BEGIN_SRC python :corrige t
+print(salaires["secteur"].nunique())
+salaires["secteur"].value_counts()
+#+END_SRC
+
+* Sélectionner et filtrer
+
+Une *colonne* s'extrait par son nom, entre crochets. Le résultat est une
+=Series= : une colonne unique, avec son index.
+
+#+BEGIN_SRC python
+salaires["salaire_net_mensuel"].head()
+#+END_SRC
+
+#+BEGIN_SRC python
+# Plusieurs colonnes : une LISTE de noms, d'où les doubles crochets.
+salaires[["sexe", "diplome", "salaire_net_mensuel"]].head()
+#+END_SRC
+
+Le *filtrage des lignes* reprend exactement la logique du masque booléen vu
+en séance 3 : une comparaison produit un booléen par ligne, et le DataFrame
+ne conserve que les lignes vraies.
+
+#+BEGIN_SRC python
+masque = salaires["salaire_net_mensuel"] > 3000     # un booléen par ligne
+hauts_salaires = salaires[masque]
+
+print(hauts_salaires.shape)
+hauts_salaires.head(3)
+#+END_SRC
+
+#+BEGIN_SRC python
+# En pratique, on écrit le masque directement dans les crochets.
+femmes_cadres = salaires[(salaires["sexe"] == "Femme") & (salaires["csp"] == "Cadre")]
+
+print(f"{len(femmes_cadres)} femmes cadres")
+print(f"Salaire moyen : {femmes_cadres['salaire_net_mensuel'].mean():.2f} €")
+#+END_SRC
+
+Deux pièges de syntaxe, immanquables. On combine les conditions avec ~&~ (et)
+et ~|~ (ou), *pas* avec =and= et =or= — ces derniers ne savent pas travailler
+ligne à ligne. Et *chaque condition doit être entre parenthèses*, faute de
+quoi Python applique les priorités dans le mauvais ordre.
+
+*Exercice 4.2* /(socle)/ — Combien de salariés sont à temps partiel ? Quelle
+part de l'effectif cela représente-t-il ? Parmi eux, quelle est la part de
+femmes ?
+
+#+BEGIN_SRC python :corrige t
+partiel = salaires[salaires["temps_travail"] == "Temps partiel"]
+
+print(f"Temps partiel : {len(partiel)} salariés")
+print(f"Soit {len(partiel) / len(salaires) * 100:.1f} % de l'effectif")
+
+part_femmes = (partiel["sexe"] == "Femme").mean() * 100
+print(f"Dont {part_femmes:.1f} % de femmes")
+#+END_SRC
+
+* Trier et créer des colonnes
+
+#+BEGIN_SRC python
+# Les dix salaires les plus élevés.
+salaires.sort_values("salaire_net_mensuel", ascending=False).head(10)
+#+END_SRC
+
+#+BEGIN_SRC python
+# Créer une colonne : l'opération porte sur toute la colonne d'un coup.
+salaires["salaire_annuel"] = salaires["salaire_net_mensuel"] * 12
+salaires["salaire_horaire"] = (
+    salaires["salaire_net_mensuel"] / (salaires["heures_hebdo"] * 52 / 12)
+)
+
+salaires[["salaire_net_mensuel", "heures_hebdo", "salaire_horaire"]].head()
+#+END_SRC
+
+Aucune boucle ici : c'est la vectorisation de la séance 3, appliquée à des
+colonnes. Le salaire horaire est d'ailleurs la bonne grandeur pour comparer un
+temps plein à un temps partiel — le salaire mensuel confond rémunération et
+durée du travail.
+
+*Exercice 4.3* /(socle)/ — Créez une colonne =sous_le_smic= valant =True= si
+le salaire net mensuel est inférieur à 1 426,30 €. Quelle part de l'effectif
+cela représente-t-il ? Ce résultat vous paraît-il crédible, et pourquoi ?
+
+#+BEGIN_SRC python :corrige t
+salaires["sous_le_smic"] = salaires["salaire_net_mensuel"] < 1426.30
+
+part = salaires["sous_le_smic"].mean() * 100
+print(f"{part:.1f} % des salariés sous le SMIC net mensuel")
+
+# Le chiffre est très supérieur à la réalité, et c'est attendu : il mélange
+# temps complets et temps partiels. Un temps partiel payé au SMIC horaire
+# touche mécaniquement moins que le SMIC mensuel.
+temps_complet = salaires[salaires["temps_travail"] == "Temps complet"]
+part_tc = (temps_complet["salaire_net_mensuel"] < 1426.30).mean() * 100
+print(f"{part_tc:.1f} % en se restreignant aux temps complets")
+#+END_SRC
+
+* Agréger avec =groupby=
+
+C'est l'outil central de la séance, et probablement celui que vous utiliserez
+le plus dans votre projet. =groupby= découpe le tableau selon une variable
+qualitative, puis applique un calcul à chaque groupe.
+
+#+BEGIN_SRC python
+salaires.groupby("diplome")["salaire_net_mensuel"].mean().round(0)
+#+END_SRC
+
+Lisez la ligne de gauche à droite : « groupe par diplôme, prends la colonne
+salaire, calcule la moyenne de chaque groupe ». Ces trois mots remplacent la
+vingtaine de lignes du mini-projet de la séance 2.
+
+#+BEGIN_SRC python
+# Trié, c'est immédiatement lisible.
+salaires.groupby("diplome")["salaire_net_mensuel"].mean().sort_values().round(0)
+#+END_SRC
+
+#+BEGIN_SRC python
+# Plusieurs statistiques d'un coup.
+salaires.groupby("sexe")["salaire_net_mensuel"].agg(["count", "mean", "median"]).round(1)
+#+END_SRC
+
+#+BEGIN_SRC python
+# Croiser deux variables : la liste des clés donne un tableau à deux entrées.
+salaires.groupby(["sexe", "temps_travail"])["salaire_net_mensuel"].mean().round(0)
+#+END_SRC
+
+*Exercice 4.4* /(socle)/ — Calculez le salaire net moyen par secteur, trié du
+plus élevé au plus faible, et affichez également l'effectif de chaque secteur.
+
+#+BEGIN_SRC python :corrige t
+(salaires
+ .groupby("secteur")["salaire_net_mensuel"]
+ .agg(["count", "mean"])
+ .round(1)
+ .sort_values("mean", ascending=False))
+#+END_SRC
+
+*Exercice 4.5* /(socle)/ — Calculez l'écart de salaire moyen entre femmes et
+hommes, d'abord sur l'ensemble, puis en se restreignant aux temps complets.
+Exprimez-le en pourcentage du salaire des hommes. Que conclure ?
+
+#+BEGIN_SRC python :corrige t
+def ecart_femmes_hommes(donnees):
+    """Écart de salaire moyen F/H, en % du salaire moyen des hommes."""
+    moyennes = donnees.groupby("sexe")["salaire_net_mensuel"].mean()
+    return (1 - moyennes["Femme"] / moyennes["Homme"]) * 100
+
+
+ensemble = ecart_femmes_hommes(salaires)
+complet = ecart_femmes_hommes(salaires[salaires["temps_travail"] == "Temps complet"])
+
+print(f"Ensemble des salariés : {ensemble:.1f} %")
+print(f"Temps complets seuls  : {complet:.1f} %")
+print()
+print("L'écart se réduit nettement à temps de travail comparable : une part")
+print("importante de l'écart brut tient au temps partiel, très majoritairement")
+print("féminin. Il n'en subsiste pas moins un écart à temps complet.")
+#+END_SRC
+
+*Exercice 4.6* /(bonus)/ — Le salaire moyen par diplôme est-il le même pour
+les femmes et pour les hommes ? Construisez un tableau croisé diplôme × sexe
+et repérez le diplôme où l'écart est le plus grand.
+
+#+BEGIN_SRC python :corrige t
+croise = (salaires
+          .groupby(["diplome", "sexe"])["salaire_net_mensuel"]
+          .mean()
+          .unstack())          # « sexe » passe en colonnes
+
+croise["ecart_%"] = (1 - croise["Femme"] / croise["Homme"]) * 100
+print(croise.round(1).sort_values("ecart_%", ascending=False).to_string())
+#+END_SRC
+
+* Une seconde source : le chômage
+
+Le fichier =data/chomage-bit.csv= contient, lui, de *vraies* données : le taux
+de chômage au sens du BIT publié par l'INSEE, par trimestre, sexe et âge,
+depuis 1975.
+
+#+BEGIN_SRC python
+chomage = pd.read_csv("data/chomage-bit.csv")
+
+print(chomage.shape)
+chomage.head()
+#+END_SRC
+
+#+BEGIN_SRC python
+# Le taux d'ensemble au dernier trimestre disponible.
+dernier = chomage["trimestre"].max()
+ensemble = chomage[(chomage["trimestre"] == dernier)
+                   & (chomage["sexe"] == "Ensemble")]
+
+print(f"Dernier trimestre : {dernier}")
+print(ensemble[["age", "taux_chomage"]].to_string(index=False))
+#+END_SRC
+
+*Exercice 4.7* /(socle)/ — Calculez le taux de chômage moyen des jeunes de
+moins de 25 ans par décennie (1980, 1990, 2000, 2010, 2020), tous sexes
+confondus. (Indication : =chomage["annee"] // 10 * 10= donne la décennie.)
+
+#+BEGIN_SRC python :corrige t
+jeunes = chomage[(chomage["age"] == "Moins de 25 ans")
+                 & (chomage["sexe"] == "Ensemble")].copy()
+
+jeunes["decennie"] = jeunes["annee"] // 10 * 10
+
+jeunes.groupby("decennie")["taux_chomage"].mean().round(1)
+#+END_SRC
+
+* Mini-projet : portrait du marché du travail
+
+Produisez, en quelques cellules, un portrait chiffré de l'échantillon. Il doit
+comporter au minimum :
+
+1. l'effectif, le salaire net médian et le salaire net moyen ;
+2. la répartition par diplôme, en pourcentage ;
+3. le salaire médian par diplôme, trié ;
+4. l'écart femmes-hommes à temps complet ;
+5. une phrase de commentaire par résultat — c'est l'interprétation qui compte,
+   pas le code.
+
+#+BEGIN_SRC python :corrige t
+temps_complet = salaires[salaires["temps_travail"] == "Temps complet"]
+
+print("PORTRAIT DE L'ÉCHANTILLON")
+print("=" * 46)
+print(f"Effectif                  : {len(salaires)}")
+print(f"Salaire net médian        : {salaires['salaire_net_mensuel'].median():.0f} €")
+print(f"Salaire net moyen         : {salaires['salaire_net_mensuel'].mean():.0f} €")
+print()
+print("La moyenne dépasse la médiane : la distribution des salaires est")
+print("asymétrique à droite, comme toutes les distributions de revenus.")
+
+print()
+print("Répartition par diplôme (%)")
+print("-" * 46)
+repartition = salaires["diplome"].value_counts(normalize=True) * 100
+print(repartition.round(1).to_string())
+
+print()
+print("Salaire net médian par diplôme, temps complet")
+print("-" * 46)
+par_diplome = (temps_complet
+               .groupby("diplome")["salaire_net_mensuel"]
+               .median()
+               .sort_values())
+print(par_diplome.round(0).to_string())
+print()
+print("Le gradient est monotone : chaque niveau de diplôme supplémentaire")
+print("est associé à un salaire médian plus élevé. La séance 5 chiffrera")
+print("ce rendement de l'éducation par une régression.")
+
+print()
+moyennes = temps_complet.groupby("sexe")["salaire_net_mensuel"].mean()
+ecart = (1 - moyennes["Femme"] / moyennes["Homme"]) * 100
+print(f"Écart femmes-hommes à temps complet : {ecart:.1f} %")
+#+END_SRC
+
+* Ce qu'il faut retenir
+
+- =pd.read_csv= / =pd.read_excel= chargent un fichier dans un *DataFrame*.
+- =info()=, =describe()= et =value_counts()= sont les trois premiers gestes
+  devant des données inconnues — et servent autant à repérer les anomalies
+  qu'à décrire.
+- Le filtrage se fait par *masque booléen*, avec ~&~ et ~|~, chaque condition
+  entre parenthèses.
+- =groupby(clé)[colonne].agg(...)= est l'outil d'agrégation central.
+- Un écart brut n'est pas un écart toutes choses égales par ailleurs :
+  restreindre aux temps complets change déjà nettement le diagnostic.
+
+La séance 5 met ces résultats en images, nettoie sérieusement le fichier, et
+chiffre le rendement de l'éducation par une régression.

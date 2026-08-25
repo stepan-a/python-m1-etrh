@@ -1,0 +1,471 @@
+#+TITLE: Séance 5 — Visualisation, nettoyage et mini-analyse
+#+SUBTITLE: Introduction à Python — M1 Économie du travail et ressources humaines
+#+AUTHOR: Stéphane Adjemian
+#+DATE: 2026-2027
+#+LANGUAGE: fr
+#+OPTIONS: toc:2 num:t ^:nil
+
+* Objectifs de la séance
+
+Dernière séance de cours. Elle boucle la chaîne complète d'une analyse : d'un
+fichier brut à un résultat interprétable.
+
+À l'issue de la séance, vous saurez :
+
+- *nettoyer* un fichier : valeurs manquantes, codages incohérents, doublons,
+  valeurs aberrantes ;
+- produire les trois graphiques de base avec *matplotlib* — histogramme,
+  nuage de points, diagramme en barres ;
+- estimer une *régression* avec statsmodels et en lire les coefficients ;
+- démarrer votre projet de groupe.
+
+L'ordre a son importance. Nous nettoyons *avant* de représenter : un
+histogramme construit sur des salaires saisis en annuel ne montre rien, et une
+moyenne calculée sur des âges à 999 ans est fausse sans prévenir. Le nettoyage
+n'est pas une corvée préalable à l'analyse, il en fait partie.
+
+# TODO(rédaction) : introduction développée, sur le modèle de la séance 1.
+
+* Nettoyer les données
+
+#+BEGIN_SRC python
+import pandas as pd
+import matplotlib.pyplot as plt
+
+brut = pd.read_csv("data/salaires.csv")
+
+print(f"{len(brut)} lignes chargées")
+brut.describe().round(1)
+#+END_SRC
+
+Trois anomalies sautent aux yeux dans ce =describe()=. La colonne =age= monte
+à 999. La colonne =salaire_net_mensuel= atteint cinq chiffres alors que la
+médiane est inférieure à 2 000. Et son effectif est plus faible que celui des
+autres colonnes : il manque des valeurs.
+
+** Les valeurs manquantes
+
+#+BEGIN_SRC python
+# Combien de valeurs manquantes, colonne par colonne ?
+brut.isna().sum()
+#+END_SRC
+
+#+BEGIN_SRC python
+part = brut["salaire_net_mensuel"].isna().mean() * 100
+print(f"{part:.1f} % de non-réponse sur le salaire")
+#+END_SRC
+
+Que faire des manquants ? Trois options, et le choix doit être *explicite*.
+On peut *supprimer* les lignes concernées — simple, mais il faut vérifier que
+la non-réponse n'est pas systématique, sans quoi on biaise l'échantillon. On
+peut *imputer* une valeur, la moyenne par exemple — cela conserve l'effectif
+mais réduit artificiellement la variance. On peut enfin *les garder* : la
+plupart des fonctions pandas les ignorent silencieusement.
+
+Ici nous supprimons, après avoir vérifié que la non-réponse ne se concentre
+pas sur un groupe.
+
+#+BEGIN_SRC python
+# La non-réponse est-elle liée au diplôme ? Si oui, supprimer biaiserait.
+brut.groupby("diplome")["salaire_net_mensuel"].apply(lambda s: s.isna().mean() * 100).round(1)
+#+END_SRC
+
+** Les codages incohérents
+
+#+BEGIN_SRC python
+brut["sexe"].value_counts()
+#+END_SRC
+
+#+BEGIN_SRC python
+propre = brut.copy()
+propre["sexe"] = propre["sexe"].replace({"F": "Femme", "H": "Homme"})
+propre["sexe"].value_counts()
+#+END_SRC
+
+=copy()= n'est pas décoratif : il garantit que l'on travaille sur une copie et
+que le tableau d'origine reste intact. Conserver le fichier brut permet de
+revenir en arrière et de documenter ce que le nettoyage a retiré.
+
+** Les doublons
+
+#+BEGIN_SRC python
+print(f"Doublons parfaits : {propre.duplicated().sum()}")
+
+propre = propre.drop_duplicates()
+print(f"Il reste {len(propre)} lignes")
+#+END_SRC
+
+** Les valeurs aberrantes
+
+#+BEGIN_SRC python
+# Les âges impossibles.
+print(propre["age"].sort_values().head(5).tolist())
+print(propre["age"].sort_values().tail(5).tolist())
+#+END_SRC
+
+#+BEGIN_SRC python
+# Les salaires : quelques valeurs saisies en annuel plutôt qu'en mensuel.
+propre["salaire_net_mensuel"].sort_values(ascending=False).head(8).tolist()
+#+END_SRC
+
+#+BEGIN_SRC python
+avant = len(propre)
+
+propre = propre[(propre["age"] >= 15) & (propre["age"] <= 70)]
+propre = propre[propre["salaire_net_mensuel"] < 20000]
+propre = propre.dropna(subset=["salaire_net_mensuel"])
+
+print(f"{avant} lignes avant, {len(propre)} après")
+print(f"{avant - len(propre)} lignes retirées, "
+      f"soit {(avant - len(propre)) / avant * 100:.1f} %")
+#+END_SRC
+
+Un seuil comme 20 000 € est un *choix*, pas une vérité. Il doit être justifié
+et écrit : ici, il écarte des salaires manifestement saisis en annuel, pas des
+hauts revenus légitimes. Dans un mémoire, ce genre de décision se documente —
+c'est exactement ce qu'on vous demandera dans le projet.
+
+*Exercice 5.1* /(socle)/ — Comparez le salaire moyen avant et après nettoyage.
+De combien l'estimation était-elle faussée, et dans quel sens ?
+
+#+BEGIN_SRC python :corrige t
+avant = brut["salaire_net_mensuel"].mean()
+apres = propre["salaire_net_mensuel"].mean()
+
+print(f"Salaire moyen avant nettoyage : {avant:.2f} €")
+print(f"Salaire moyen après nettoyage : {apres:.2f} €")
+print(f"Écart : {avant - apres:.2f} € ({(avant / apres - 1) * 100:.1f} %)")
+print()
+print("Les quinze salaires saisis en annuel suffisaient à tirer la moyenne")
+print("vers le haut : une poignée de valeurs aberrantes déforme une moyenne,")
+print("alors qu'elle laisse la médiane presque intacte.")
+print(f"Médiane avant : {brut['salaire_net_mensuel'].median():.0f} € — "
+      f"après : {propre['salaire_net_mensuel'].median():.0f} €")
+#+END_SRC
+
+* Représenter les données
+
+** L'histogramme : une distribution
+
+#+BEGIN_SRC python
+temps_complet = propre[propre["temps_travail"] == "Temps complet"]
+
+plt.figure(figsize=(9, 5))
+plt.hist(temps_complet["salaire_net_mensuel"], bins=40, edgecolor="white")
+
+plt.axvline(temps_complet["salaire_net_mensuel"].median(),
+            color="black", linestyle="--", label="Médiane")
+plt.axvline(temps_complet["salaire_net_mensuel"].mean(),
+            color="firebrick", linestyle="--", label="Moyenne")
+
+plt.xlabel("Salaire net mensuel (€)")
+plt.ylabel("Nombre de salariés")
+plt.title("Distribution des salaires nets, temps complet")
+plt.legend()
+plt.show()
+#+END_SRC
+
+La moyenne est à droite de la médiane : c'est la signature d'une distribution
+asymétrique, et c'est la règle pour les revenus. C'est pourquoi on publie le
+salaire *médian* — la moyenne est tirée vers le haut par la queue de
+distribution et décrit mal le salarié typique.
+
+Un graphique sans axes légendés ne veut rien dire. =xlabel=, =ylabel= et
+=title= ne sont pas facultatifs : ils font partie du résultat.
+
+** Le nuage de points : une relation
+
+#+BEGIN_SRC python
+plt.figure(figsize=(9, 5))
+plt.scatter(temps_complet["annees_etudes"],
+            temps_complet["salaire_net_mensuel"],
+            alpha=0.15, s=12)
+
+# La moyenne par niveau d'études, superposée au nuage.
+moyennes = temps_complet.groupby("annees_etudes")["salaire_net_mensuel"].mean()
+plt.plot(moyennes.index, moyennes.values, color="firebrick",
+         marker="o", linewidth=2, label="Salaire moyen")
+
+plt.xlabel("Années d'études")
+plt.ylabel("Salaire net mensuel (€)")
+plt.title("Salaire et niveau d'études, temps complet")
+plt.legend()
+plt.show()
+#+END_SRC
+
+=alpha=0.15= rend les points translucides : là où ils se superposent, la
+tache est plus dense. Sans cela, avec quelques milliers d'observations, le
+nuage devient un bloc noir illisible.
+
+La relation est croissante, mais la *dispersion à niveau d'études donné* est
+considérable. Le diplôme explique une partie du salaire, pas la totalité —
+c'est ce que le R² de la régression chiffrera tout à l'heure.
+
+** Le diagramme en barres : comparer des groupes
+
+#+BEGIN_SRC python
+par_diplome = (temps_complet
+               .groupby("diplome")["salaire_net_mensuel"]
+               .median()
+               .sort_values())
+
+plt.figure(figsize=(9, 5))
+plt.barh(par_diplome.index, par_diplome.values, color="steelblue")
+
+plt.xlabel("Salaire net mensuel médian (€)")
+plt.title("Salaire médian par diplôme, temps complet")
+plt.tight_layout()
+plt.show()
+#+END_SRC
+
+=barh= produit des barres *horizontales* : les étiquettes longues restent
+lisibles, là où des barres verticales les auraient chevauchées. Trier les
+barres avant de les tracer est presque toujours une bonne idée.
+
+** Une série temporelle
+
+#+BEGIN_SRC python
+chomage = pd.read_csv("data/chomage-bit.csv")
+
+jeunes = chomage[(chomage["age"] == "Moins de 25 ans")
+                 & (chomage["sexe"] == "Ensemble")]
+ensemble = chomage[(chomage["age"] == "Ensemble")
+                   & (chomage["sexe"] == "Ensemble")]
+
+plt.figure(figsize=(10, 5))
+plt.plot(jeunes["annee"] + (jeunes["num_trimestre"] - 1) / 4,
+         jeunes["taux_chomage"], label="Moins de 25 ans")
+plt.plot(ensemble["annee"] + (ensemble["num_trimestre"] - 1) / 4,
+         ensemble["taux_chomage"], label="Ensemble")
+
+plt.xlabel("Année")
+plt.ylabel("Taux de chômage BIT (%)")
+plt.title("Taux de chômage en France, 1975-2026")
+plt.legend()
+plt.grid(alpha=0.3)
+plt.show()
+#+END_SRC
+
+*Exercice 5.2* /(socle)/ — Tracez un histogramme des salaires des femmes et
+des hommes sur le même graphique, à temps complet, avec =alpha=0.5= pour voir
+les deux distributions se superposer. Que constatez-vous ?
+
+#+BEGIN_SRC python :corrige t
+femmes = temps_complet[temps_complet["sexe"] == "Femme"]["salaire_net_mensuel"]
+hommes = temps_complet[temps_complet["sexe"] == "Homme"]["salaire_net_mensuel"]
+
+plt.figure(figsize=(9, 5))
+plt.hist(femmes, bins=40, alpha=0.5, label="Femmes", edgecolor="white")
+plt.hist(hommes, bins=40, alpha=0.5, label="Hommes", edgecolor="white")
+
+plt.xlabel("Salaire net mensuel (€)")
+plt.ylabel("Nombre de salariés")
+plt.title("Distribution des salaires par sexe, temps complet")
+plt.legend()
+plt.show()
+
+print(f"Médiane femmes : {femmes.median():.0f} €")
+print(f"Médiane hommes : {hommes.median():.0f} €")
+print("Les deux distributions se recouvrent largement : l'écart porte sur")
+print("l'ensemble de la distribution, il ne sépare pas deux populations.")
+#+END_SRC
+
+*Exercice 5.3* /(bonus)/ — Tracez l'écart de taux de chômage entre femmes et
+hommes depuis 1975. Cet écart s'est-il refermé ?
+
+#+BEGIN_SRC python :corrige t
+par_sexe = chomage[chomage["age"] == "Ensemble"]
+
+pivot = par_sexe.pivot_table(index=["annee", "num_trimestre"],
+                             columns="sexe",
+                             values="taux_chomage").reset_index()
+pivot["ecart"] = pivot["Femmes"] - pivot["Hommes"]
+pivot["date"] = pivot["annee"] + (pivot["num_trimestre"] - 1) / 4
+
+plt.figure(figsize=(10, 5))
+plt.plot(pivot["date"], pivot["ecart"], color="darkorange")
+plt.axhline(0, color="black", linewidth=0.8)
+
+plt.xlabel("Année")
+plt.ylabel("Écart femmes − hommes (points)")
+plt.title("Écart de taux de chômage entre femmes et hommes")
+plt.grid(alpha=0.3)
+plt.show()
+
+print(f"Écart moyen dans les années 1980 : "
+      f"{pivot[pivot.annee < 1990]['ecart'].mean():.2f} points")
+print(f"Écart moyen depuis 2015          : "
+      f"{pivot[pivot.annee >= 2015]['ecart'].mean():.2f} points")
+#+END_SRC
+
+* Mini-analyse : le rendement de l'éducation
+
+Dernière étape : chiffrer ce que le nuage de points suggérait. On estime une
+équation de Mincer, la spécification de référence en économie du travail :
+
+#+BEGIN_EXAMPLE
+log(salaire) = b0 + b1 × années d'études + b2 × expérience
+                  + b3 × expérience² + b4 × sexe + résidu
+#+END_EXAMPLE
+
+Le logarithme n'est pas un ornement : il rend les coefficients lisibles *en
+pourcentage*. Un coefficient de 0,075 sur les années d'études signifie qu'une
+année supplémentaire est associée à un salaire supérieur d'environ 7,5 %.
+
+#+BEGIN_SRC python
+import numpy as np
+import statsmodels.formula.api as smf
+
+modele = smf.ols(
+    "np.log(salaire_net_mensuel) ~ annees_etudes + experience + I(experience**2) + C(sexe)",
+    data=temps_complet,
+).fit()
+
+print(modele.summary())
+#+END_SRC
+
+Comment lire cette sortie. La colonne =coef= donne les coefficients estimés.
+=P>|t|= est la p-valeur : en dessous de 0,05, on rejette conventionnellement
+l'hypothèse de nullité du coefficient. =R-squared= est la part de la variance
+du log-salaire expliquée par le modèle.
+
+#+BEGIN_SRC python
+rendement = modele.params["annees_etudes"] * 100
+ecart_sexe = modele.params["C(sexe)[T.Homme]"] * 100
+
+print(f"Rendement d'une année d'études : {rendement:.1f} %")
+print(f"Écart hommes-femmes à caractéristiques comparables : {ecart_sexe:.1f} %")
+print(f"R² : {modele.rsquared:.3f}")
+#+END_SRC
+
+Deux précautions, et elles comptent plus que le code.
+
+*Corrélation n'est pas causalité.* Ce coefficient de 7,5 % n'est pas l'effet
+causal d'une année d'études. Les personnes qui étudient plus longtemps
+diffèrent aussi par des caractéristiques que nous n'observons pas — c'est le
+biais de variable omise, et toute une littérature s'emploie à le traiter.
+
+*L'écart entre sexes se réduit sans disparaître.* Passer de l'écart brut à
+l'écart à caractéristiques comparables absorbe une partie de l'écart, pas la
+totalité. Ce qui reste ne se laisse pas expliquer par le diplôme,
+l'expérience et le temps de travail.
+
+*Exercice 5.4* /(socle)/ — Ajoutez le secteur au modèle avec =C(secteur)=. Le
+rendement de l'éducation change-t-il ? Le R² s'améliore-t-il ?
+
+#+BEGIN_SRC python :corrige t
+modele_secteur = smf.ols(
+    "np.log(salaire_net_mensuel) ~ annees_etudes + experience + I(experience**2)"
+    " + C(sexe) + C(secteur)",
+    data=temps_complet,
+).fit()
+
+print(f"Rendement sans secteur : "
+      f"{modele.params['annees_etudes'] * 100:.2f} %  (R² = {modele.rsquared:.3f})")
+print(f"Rendement avec secteur : "
+      f"{modele_secteur.params['annees_etudes'] * 100:.2f} %  "
+      f"(R² = {modele_secteur.rsquared:.3f})")
+#+END_SRC
+
+*Exercice 5.5* /(bonus)/ — Estimez le modèle séparément pour les femmes et
+pour les hommes. Le rendement de l'éducation est-il le même ?
+
+#+BEGIN_SRC python :corrige t
+formule = ("np.log(salaire_net_mensuel) ~ annees_etudes + experience"
+           " + I(experience**2)")
+
+for sexe in ["Femme", "Homme"]:
+    sous_echantillon = temps_complet[temps_complet["sexe"] == sexe]
+    ajuste = smf.ols(formule, data=sous_echantillon).fit()
+    print(f"{sexe:6s} : rendement = {ajuste.params['annees_etudes'] * 100:.2f} % "
+          f"| R² = {ajuste.rsquared:.3f} | n = {int(ajuste.nobs)}")
+#+END_SRC
+
+* Lancement du projet
+
+Vous travaillez par groupes de trois. Le TD, quelques semaines après cette
+séance, est entièrement consacré aux restitutions : environ 20 minutes par
+groupe, dont 12 de présentation et 8 de questions.
+
+** Ce qui est attendu
+
+*Un notebook reproductible* : chargement et nettoyage des données, deux ou
+trois statistiques descriptives pertinentes, deux graphiques, et une amorce
+d'analyse — comparaison de groupes ou petite régression. Reproductible
+signifie qu'un lecteur doit pouvoir l'exécuter du début à la fin et retrouver
+vos résultats.
+
+*Une présentation orale* qui met en avant la question économique et
+l'interprétation *autant* que le code. Un beau graphique sans commentaire ne
+vaut rien ; un résultat modeste bien interprété vaut beaucoup.
+
+** Idées de sujets
+
+- Écart de salaire femmes-hommes selon le secteur ou le diplôme ;
+- rendement de l'éducation sur les salaires ;
+- évolution du taux de chômage par région ou par tranche d'âge ;
+- lien entre temps partiel et catégorie socioprofessionnelle ;
+- déterminants de l'ancienneté ou du turnover à partir d'un jeu RH.
+
+** Où trouver des données
+
+L'INSEE ([[https://www.insee.fr][insee.fr]], et sa base de séries [[https://bdm.insee.fr][bdm.insee.fr]]), la DARES,
+[[https://www.data.gouv.fr][data.gouv.fr]], Eurostat et OCDE.Stat. Le fichier =data/rh-turnover.csv= livré
+avec le cours offre un terrain simple et propre à qui préfère consacrer son
+temps à l'analyse.
+
+*Conseil.* Choisissez la question *avant* les données, mais vérifiez que les
+données existent avant de vous engager. Une question modeste traitée
+proprement vaut mieux qu'une ambition qui s'échoue sur un fichier
+introuvable.
+
+** Un premier pas, tout de suite
+
+Avant de partir, ouvrez le jeu RH et regardez-le. C'est le geste par lequel
+commence toute analyse.
+
+#+BEGIN_SRC python
+rh = pd.read_csv("data/rh-turnover.csv")
+
+print(rh.shape)
+print()
+print(f"Taux de démission : {(rh['a_demissionne'] == 'Oui').mean() * 100:.1f} %")
+print()
+print(rh.groupby("a_demissionne")[["satisfaction", "anciennete",
+                                    "salaire_mensuel"]].mean().round(2).to_string())
+#+END_SRC
+
+*Exercice 5.6* /(socle, à faire en groupe)/ — Formulez en une phrase la
+question de votre projet, puis écrivez les trois cellules qui chargent vos
+données, en donnent la dimension, et affichent une première statistique
+descriptive.
+
+#+BEGIN_SRC python :corrige t
+# Question : les démissions s'expliquent-elles par l'insatisfaction, ou par
+# les conditions objectives d'emploi (salaire, heures supplémentaires) ?
+
+rh = pd.read_csv("data/rh-turnover.csv")
+print(f"{rh.shape[0]} salariés, {rh.shape[1]} variables")
+
+# Première statistique : le taux de démission selon la satisfaction déclarée.
+taux = rh.groupby("satisfaction")["a_demissionne"].apply(
+    lambda s: (s == "Oui").mean() * 100)
+
+print()
+print("Taux de démission (%) par niveau de satisfaction :")
+print(taux.round(1).to_string())
+#+END_SRC
+
+* Ce qu'il faut retenir
+
+- Le *nettoyage* fait partie de l'analyse : manquants, codages incohérents,
+  doublons, aberrants. Chaque seuil retenu est un choix, et se documente.
+- Une poignée de valeurs aberrantes déforme une *moyenne* et laisse la
+  *médiane* presque intacte.
+- Trois graphiques suffisent à l'essentiel : histogramme pour une
+  distribution, nuage pour une relation, barres pour comparer des groupes.
+  Toujours légender les axes.
+- Une régression en *log* se lit en pourcentage ; son coefficient n'est pas
+  un effet causal.
+
+Bon travail pour le projet — et n'oubliez pas de télécharger vos notebooks.

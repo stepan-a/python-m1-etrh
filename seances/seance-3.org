@@ -1,0 +1,397 @@
+#+TITLE: Séance 3 — Fonctions, modules et bonnes pratiques
+#+SUBTITLE: Introduction à Python — M1 Économie du travail et ressources humaines
+#+AUTHOR: Stéphane Adjemian
+#+DATE: 2026-2027
+#+LANGUAGE: fr
+#+OPTIONS: toc:2 num:t ^:nil
+
+* Objectifs de la séance
+
+En séance 2, le calcul de tranche de revenu a été recopié deux fois. Recopier
+du code est toujours le signe qu'il manque une abstraction : c'est le rôle des
+*fonctions*.
+
+À l'issue de la séance, vous saurez :
+
+- définir une fonction, lui passer des *arguments*, en récupérer une *valeur
+  de retour* ;
+- donner des *valeurs par défaut* à certains arguments ;
+- distinguer les variables *locales* des variables *globales* ;
+- importer un *module* et vous repérer dans la bibliothèque standard ;
+- intercepter une erreur avec =try= / =except= ;
+- manipuler un tableau *NumPy* et comprendre ce qu'est une opération
+  vectorisée.
+
+# TODO(rédaction) : introduction développée, sur le modèle de la séance 1.
+
+* Définir une fonction
+
+#+BEGIN_SRC python
+def salaire_net(brut, taux_cotisations=0.22):
+    """Calcule le salaire net à partir du brut.
+
+    brut             : salaire brut mensuel, en euros
+    taux_cotisations : part des cotisations salariales (0.22 par défaut)
+    """
+    return brut * (1 - taux_cotisations)
+
+
+# Appels : le second argument est facultatif.
+print(salaire_net(2500))
+print(salaire_net(2500, 0.25))
+print(salaire_net(brut=4200, taux_cotisations=0.25))    # arguments nommés
+#+END_SRC
+
+Décomposons. =def= introduit la définition et le nom. Ce qui suit entre
+parenthèses, ce sont les *paramètres*. Le deux-points ouvre le corps, qui est
+indenté comme celui d'un =if=. =return= renvoie le résultat à l'appelant et
+termine la fonction.
+
+Le texte entre triples guillemets est la *docstring* : elle documente la
+fonction et s'affiche avec =help(salaire_net)=. Prenez l'habitude de
+l'écrire — c'est ce que vous relirez dans six mois.
+
+=taux_cotisations=0.22= est une *valeur par défaut* : le paramètre devient
+facultatif. Enfin, on peut passer les arguments *par nom*, ce qui rend
+l'appel autodocumenté et dispense de retenir leur ordre.
+
+** Portée des variables
+
+#+BEGIN_SRC python
+def calcul(brut):
+    net = brut * 0.78        # « net » n'existe QUE dans la fonction
+    return net
+
+
+resultat = calcul(2500)
+print(resultat)
+
+# Décommentez : « net » n'existe pas ici.
+# print(net)
+#+END_SRC
+
+Une variable créée dans une fonction est *locale* : elle disparaît à la sortie.
+C'est une protection, pas une gêne — c'est ce qui permet d'écrire une fonction
+sans craindre d'écraser une variable du reste du programme.
+
+*Exercice 3.1* /(socle)/ — Écrivez une fonction =taux_croissance(depart,
+arrivee, annees)= qui renvoie le taux de croissance annuel moyen en
+pourcentage. Testez-la sur un salaire passant de 1 980 € à 2 310 € en 5 ans.
+
+#+BEGIN_SRC python :corrige t
+def taux_croissance(depart, arrivee, annees):
+    """Taux de croissance annuel moyen, en pourcentage."""
+    return ((arrivee / depart) ** (1 / annees) - 1) * 100
+
+
+print(f"{taux_croissance(1980, 2310, 5):.2f} % par an")
+#+END_SRC
+
+*Exercice 3.2* /(socle)/ — Écrivez une fonction =tranche(salaire)= qui renvoie
+="Bas salaire"=, ="Salaire intermédiaire"= ou ="Salaire élevé"= selon les
+seuils de la séance 2 (1 600 € et 2 600 €). Appliquez-la à une liste de
+salaires avec une compréhension.
+
+#+BEGIN_SRC python :corrige t
+def tranche(salaire):
+    """Classe un salaire mensuel net en trois tranches."""
+    if salaire < 1600:
+        return "Bas salaire"
+    elif salaire < 2600:
+        return "Salaire intermédiaire"
+    else:
+        return "Salaire élevé"
+
+
+salaires = [1850, 2100, 2450, 1650, 3200, 2050, 1900]
+print([tranche(s) for s in salaires])
+#+END_SRC
+
+*Exercice 3.3* /(bonus)/ — Écrivez =ecart_salarial(groupe_a, groupe_b)= qui
+prend deux listes de salaires et renvoie l'écart de moyennes en pourcentage,
+au détriment du premier groupe.
+
+#+BEGIN_SRC python :corrige t
+def moyenne(valeurs):
+    """Moyenne arithmétique d'une liste non vide."""
+    return sum(valeurs) / len(valeurs)
+
+
+def ecart_salarial(groupe_a, groupe_b):
+    """Écart de salaire moyen entre deux groupes, en % du groupe B."""
+    return (1 - moyenne(groupe_a) / moyenne(groupe_b)) * 100
+
+
+femmes = [1980, 1750, 2100, 2320]
+hommes = [2450, 2890, 2050, 2180]
+
+print(f"Écart : {ecart_salarial(femmes, hommes):.1f} %")
+#+END_SRC
+
+* Modules et bibliothèque standard
+
+Un *module* est un fichier de code que l'on charge avec =import=. Python en
+livre plusieurs centaines : c'est la bibliothèque standard.
+
+#+BEGIN_SRC python
+import math
+import statistics
+
+salaires = [1850, 2100, 2450, 1650, 3200, 2050, 1900]
+
+print(statistics.mean(salaires))        # moyenne
+print(statistics.median(salaires))      # médiane
+print(round(statistics.stdev(salaires), 2))
+
+print(math.log(2500))                   # logarithme népérien
+print(math.sqrt(144))
+#+END_SRC
+
+Trois formes d'import coexistent. =import math= charge le module et impose de
+préfixer (=math.log=). =from math import log= importe un seul nom, utilisable
+sans préfixe. =import pandas as pd= charge sous un alias — c'est la forme que
+vous verrez partout en séance 4.
+
+#+BEGIN_SRC python
+from math import log, exp
+
+# Le logarithme du salaire est la variable expliquée usuelle en économie du
+# travail : un coefficient s'y lit directement en pourcentage.
+print(log(2500))
+print(exp(log(2500)))
+#+END_SRC
+
+* Gérer les erreurs
+
+Une erreur interrompt le programme. =try= / =except= permet de l'intercepter
+et de poursuivre — indispensable quand on traite des milliers de lignes dont
+quelques-unes sont douteuses.
+
+#+BEGIN_SRC python
+# Des salaires tels qu'ils sortiraient d'un fichier : du texte, et des trous.
+brut = ["2500", "2 800", "", "3100", "non renseigné", "1950"]
+
+valides = []
+for valeur in brut:
+    try:
+        valides.append(float(valeur))
+    except ValueError:
+        print(f"Valeur ignorée : {valeur!r}")
+
+print(valides)
+print(f"{len(valides)} valeurs exploitables sur {len(brut)}")
+#+END_SRC
+
+Notez ={valeur!r}= : le =!r= affiche la valeur telle que Python la voit,
+guillemets compris — c'est ce qui rend visible la chaîne vide.
+
+Une mise en garde : n'interceptez que les erreurs que vous attendez, ici
+=ValueError=. Un =except= sans précision masquerait aussi les fautes de frappe
+et les vrais bogues, et vous chercheriez longtemps.
+
+*Exercice 3.4* /(socle)/ — Écrivez =en_nombre(texte)= qui renvoie le nombre
+correspondant, ou =None= si la conversion est impossible. Appliquez-la à la
+liste =brut= ci-dessus et comptez les valeurs manquantes.
+
+#+BEGIN_SRC python :corrige t
+def en_nombre(texte):
+    """Convertit en nombre, ou renvoie None si c'est impossible."""
+    try:
+        return float(texte)
+    except ValueError:
+        return None
+
+
+brut = ["2500", "2 800", "", "3100", "non renseigné", "1950"]
+converties = [en_nombre(v) for v in brut]
+
+print(converties)
+
+manquantes = [v for v in converties if v is None]
+print(f"{len(manquantes)} valeurs manquantes sur {len(brut)}")
+#+END_SRC
+
+* Qualité du code
+
+Un code propre est un code réutilisable. Trois principes suffisent à ce stade.
+
+*Nommer pour être lu.* =taux_croissance= vaut mieux que =tc=. Le temps gagné
+à la frappe est perdu au centuple à la relecture.
+
+*Commenter le pourquoi, pas le quoi.* =# on multiplie par 12= est inutile, le
+code le dit déjà. =# le treizième mois est versé en décembre, d'où 13= est
+utile : il explique une décision qui ne se lit pas dans le code.
+
+*Une fonction, une responsabilité.* Si vous ne pouvez pas décrire ce que fait
+votre fonction en une phrase, c'est qu'il y en a deux.
+
+#+BEGIN_SRC python
+# Version peu lisible
+def f(x, y):
+    return (1 - x / y) * 100
+
+
+# Version lisible : le nom et la docstring disent tout
+def ecart_relatif(valeur, reference):
+    """Écart de « valeur » à « reference », en % de la référence."""
+    return (1 - valeur / reference) * 100
+
+
+print(ecart_relatif(1980, 2450))
+#+END_SRC
+
+* Première approche de NumPy
+
+*NumPy* fournit le =array=, un tableau de nombres sur lequel les opérations
+s'appliquent *à tous les éléments à la fois*. C'est la brique sur laquelle
+pandas est construit : le comprendre ici évite de le subir en séance 4.
+
+#+BEGIN_SRC python
+import numpy as np
+
+salaires = np.array([1850, 2100, 2450, 1650, 3200, 2050, 1900])
+
+# Pas de boucle : l'opération porte sur tout le tableau.
+print(salaires * 1.02)
+print(salaires - 1426.30)
+
+print(salaires.mean())
+print(salaires.std())
+print(np.median(salaires))
+#+END_SRC
+
+Avec une liste, =salaires * 1.02= aurait échoué : c'est le tableau NumPy qui
+donne un sens à l'opération terme à terme. C'est ce qu'on appelle la
+*vectorisation* — plus court à écrire, et bien plus rapide.
+
+Le filtrage suit la même logique, et c'est celui de la séance 4 : une
+comparaison produit un tableau de booléens, qui sert ensuite de masque.
+
+#+BEGIN_SRC python
+import numpy as np
+
+salaires = np.array([1850, 2100, 2450, 1650, 3200, 2050, 1900])
+
+masque = salaires < 2100          # un booléen par élément
+print(masque)
+
+print(salaires[masque])           # on ne garde que les « True »
+print(masque.mean())              # la moyenne d'un booléen est une PART
+#+END_SRC
+
+La dernière ligne mérite d'être retenue : la moyenne d'un tableau de booléens
+est la *proportion* de valeurs vraies. C'est le moyen le plus court de
+calculer une part.
+
+*Exercice 3.5* /(socle)/ — À partir du tableau =salaires=, calculez la part
+de salariés sous le salaire médian (2 100 €), puis le salaire moyen de ce
+seul groupe.
+
+#+BEGIN_SRC python :corrige t
+import numpy as np
+
+salaires = np.array([1850, 2100, 2450, 1650, 3200, 2050, 1900])
+median = 2100
+
+sous_median = salaires < median
+
+print(f"Part sous la médiane : {sous_median.mean() * 100:.1f} %")
+print(f"Salaire moyen du groupe : {salaires[sous_median].mean():.2f} €")
+#+END_SRC
+
+*Exercice 3.6* /(bonus)/ — Appliquez une augmentation de 3 % aux salaires
+inférieurs à 2 000 € et de 1 % aux autres, puis affichez la nouvelle masse
+salariale. (Indication : =np.where(condition, si_vrai, si_faux)=.)
+
+#+BEGIN_SRC python :corrige t
+import numpy as np
+
+salaires = np.array([1850, 2100, 2450, 1650, 3200, 2050, 1900])
+
+taux = np.where(salaires < 2000, 1.03, 1.01)
+nouveaux = salaires * taux
+
+print(nouveaux.round(2))
+print(f"Masse salariale avant : {salaires.sum()} €")
+print(f"Masse salariale après : {nouveaux.sum():.2f} €")
+#+END_SRC
+
+* Mini-projet : une boîte à outils salariale
+
+Rassemblez la séance en un petit ensemble de fonctions réutilisables, puis
+appliquez-les à une liste de salariés. Votre boîte à outils doit contenir :
+
+1. =net_a_payer(brut, taux_cotisations=0.22, taux_impot=0.05)= ;
+2. =tranche(salaire)=, reprise de l'exercice 3.2 ;
+3. =resume(salaires)= qui renvoie un *dictionnaire* contenant effectif,
+   moyenne, médiane, minimum et maximum ;
+4. un affichage lisible du résumé pour une liste de salaires bruts.
+
+#+BEGIN_SRC python :corrige t
+import statistics
+
+
+def net_a_payer(brut, taux_cotisations=0.22, taux_impot=0.05):
+    """Net à payer : cotisations puis prélèvement à la source.
+
+    Les deux prélèvements se composent, ils ne s'additionnent pas.
+    """
+    net_avant_impot = brut * (1 - taux_cotisations)
+    return net_avant_impot * (1 - taux_impot)
+
+
+def tranche(salaire):
+    """Classe un salaire mensuel net en trois tranches."""
+    if salaire < 1600:
+        return "Bas salaire"
+    elif salaire < 2600:
+        return "Salaire intermédiaire"
+    return "Salaire élevé"
+
+
+def resume(salaires):
+    """Statistiques descriptives d'une liste de salaires."""
+    return {
+        "effectif": len(salaires),
+        "moyenne": statistics.mean(salaires),
+        "mediane": statistics.median(salaires),
+        "minimum": min(salaires),
+        "maximum": max(salaires),
+    }
+
+
+# --- Application ------------------------------------------------------
+bruts = [2500, 2800, 1900, 4200, 3100, 1750, 2250, 5400]
+nets = [net_a_payer(b) for b in bruts]
+
+stats = resume(nets)
+print("Salaires nets à payer")
+print("-" * 34)
+for cle, valeur in stats.items():
+    print(f"{cle:10s} : {valeur:9.2f}")
+
+print()
+effectifs = {}
+for net in nets:
+    cle = tranche(net)
+    effectifs[cle] = effectifs.get(cle, 0) + 1
+
+for cle, nombre in effectifs.items():
+    print(f"{cle:22s} : {nombre}")
+#+END_SRC
+
+* Ce qu'il faut retenir
+
+- Une *fonction* porte un nom, reçoit des arguments et =return= un résultat ;
+  ses variables sont locales.
+- Une *valeur par défaut* rend un argument facultatif ; les *arguments
+  nommés* rendent l'appel lisible.
+- =import module= charge du code déjà écrit ; =import pandas as pd= est la
+  forme que vous verrez partout.
+- =try= / =except ValueError= laisse un traitement se poursuivre malgré
+  quelques valeurs douteuses — n'interceptez que ce que vous attendez.
+- Un tableau *NumPy* s'opère d'un bloc ; un masque booléen filtre, et la
+  moyenne d'un masque est une part.
+
+La séance 4 remplace ces listes par de vraies données : plusieurs milliers de
+salariés, chargés depuis un fichier, avec pandas.

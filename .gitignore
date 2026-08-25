@@ -1,0 +1,19 @@
+# Environnement virtuel — reconstructible depuis requirements.lock
+.venv/
+
+# Tout ce que le Makefile engendre
+build/etudiant/
+build/corrige/
+notebooks/
+content/
+dist/
+.jupyterlite.doit.db
+
+# Sous-produits Jupyter
+.ipynb_checkpoints/
+__pycache__/
+*.pyc
+
+# Le syllabus n'est pas versionné : il est distribué par les canaux de
+# l'université, pas par le dépôt du cours.
+syllabus/

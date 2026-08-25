@@ -1,0 +1,57 @@
+Introduction à Python — M1 ETRH
+===============================
+
+Ce dossier contient le cours sous forme de notebooks, pour un usage
+HORS LIGNE.
+
+
+Le plus simple : ne rien installer
+----------------------------------
+
+Le cours s'exécute directement dans un navigateur, sans rien installer
+et sans créer de compte :
+
+    https://le-mans.adjemian.eu/python-m1-etrh/
+
+C'est la voie normale. Ce dossier n'est utile que pour travailler sans
+connexion, ou pour le projet de groupe si vos données dépassent ce que
+le navigateur peut avaler.
+
+
+Utiliser ce dossier hors ligne
+------------------------------
+
+Il vous faut Python 3 :
+
+    https://www.python.org/downloads/
+
+(Sous Windows, à l'installation, cochez bien « Add Python to PATH ».)
+
+Ouvrez un terminal dans ce dossier, puis tapez :
+
+    python cours.py
+
+(Sous Windows, c'est parfois « py cours.py ».)
+
+Au premier lancement, le programme prépare tout automatiquement — cela
+peut prendre une minute — puis ouvre le cours dans votre navigateur
+grâce à JupyterLab. Les fois suivantes, c'est immédiat.
+
+Pour quitter : fermez l'onglet du cours, puis la fenêtre du terminal.
+
+
+Ce que contient ce dossier
+--------------------------
+
+    seance-1.ipynb ... seance-5.ipynb           les cinq séances
+    seance-1-corrige.ipynb ...                  les corrigés
+    data/                                       les jeux de données
+    wheels/                                     bibliothèques d'appoint
+    DONNEES.md                                  d'où viennent les données
+
+Les notebooks lisent les données sous « data/ ». Gardez donc ce dossier
+tel quel : si vous déplacez un notebook ailleurs, il ne trouvera plus
+ses fichiers.
+
+
+Bon travail !

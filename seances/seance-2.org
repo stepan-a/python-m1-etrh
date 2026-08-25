@@ -1,0 +1,430 @@
+#+TITLE: Séance 2 — Structures de données et contrôle du flux
+#+SUBTITLE: Introduction à Python — M1 Économie du travail et ressources humaines
+#+AUTHOR: Stéphane Adjemian
+#+DATE: 2026-2027
+#+LANGUAGE: fr
+#+OPTIONS: toc:2 num:t ^:nil
+
+* Objectifs de la séance
+
+En séance 1, chaque variable contenait *une* valeur : un salaire, un âge. Une
+enquête, elle, contient des milliers d'observations. Il faut donc deux choses
+nouvelles : des structures capables de contenir plusieurs valeurs, et des
+instructions capables de les parcourir.
+
+À l'issue de la séance, vous saurez :
+
+- ranger des valeurs dans une *liste*, un *tuple*, un *dictionnaire* ou un
+  *ensemble*, et choisir laquelle convient ;
+- extraire un élément ou une tranche par *indexation* et *slicing* ;
+- brancher un traitement selon une condition (=if= / =elif= / =else=) ;
+- répéter un traitement (=for=, =while=, =range=) ;
+- écrire une *compréhension de liste*.
+
+Le fil conducteur : calculer « à la main » les statistiques descriptives d'un
+ensemble de salaires, puis classer des individus par tranche de revenu. Vous
+referez tout cela en une ligne avec pandas en séance 4 — savoir ce que cette
+ligne fait est précisément l'objet d'aujourd'hui.
+
+# TODO(rédaction) : introduction développée, sur le modèle de la séance 1.
+
+* Les listes
+
+Une *liste* est une suite ordonnée de valeurs, écrite entre crochets.
+
+#+BEGIN_SRC python
+salaires = [1850, 2100, 2450, 1650, 3200, 2050, 1900]
+
+print(salaires)
+print(len(salaires))        # combien d'éléments ?
+#+END_SRC
+
+# TODO(rédaction) : paragraphe sur la mutabilité et le coût des insertions.
+
+** Indexation et slicing
+
+*Les indices commencent à zéro.* C'est la source d'erreur numéro un chez les
+débutants, et elle ne disparaît qu'avec la pratique.
+
+#+BEGIN_SRC python
+salaires = [1850, 2100, 2450, 1650, 3200, 2050, 1900]
+
+print(salaires[0])      # le PREMIER élément
+print(salaires[2])      # le troisième
+print(salaires[-1])     # le dernier
+print(salaires[-2])     # l'avant-dernier
+
+# Slicing : une tranche [début:fin], la fin étant EXCLUE
+print(salaires[0:3])    # les trois premiers
+print(salaires[:3])     # idem, le début est implicite
+print(salaires[4:])     # du cinquième à la fin
+#+END_SRC
+
+La borne de fin est *exclue* : =salaires[0:3]= donne trois éléments, ceux
+d'indices 0, 1 et 2. Cette convention paraît arbitraire ; elle a l'avantage
+que =salaires[:k]= et =salaires[k:]= découpent exactement la liste en deux.
+
+** Modifier une liste
+
+#+BEGIN_SRC python
+salaires = [1850, 2100, 2450]
+
+salaires.append(1750)          # ajouter à la fin
+salaires[0] = 1880             # remplacer un élément
+print(salaires)
+
+salaires.sort()                # trier sur place
+print(salaires)
+print(min(salaires), max(salaires), sum(salaires))
+#+END_SRC
+
+*Exercice 2.1* /(socle)/ — À partir de la liste =salaires= ci-dessous,
+affichez le salaire le plus élevé, le plus faible, et la somme totale.
+Affichez ensuite les trois premiers salaires une fois la liste triée.
+
+#+BEGIN_SRC python :corrige t
+salaires = [1850, 2100, 2450, 1650, 3200, 2050, 1900]
+
+print(max(salaires))
+print(min(salaires))
+print(sum(salaires))
+
+salaires.sort()
+print(salaires[:3])
+#+END_SRC
+
+* Tuples, dictionnaires, ensembles
+
+# TODO(rédaction) : développer le « quand utiliser quoi ».
+
+Un *tuple* s'écrit entre parenthèses et ne peut plus être modifié. On s'en
+sert pour ce qui ne doit pas changer : des coordonnées, un couple de bornes.
+
+#+BEGIN_SRC python
+tranche_smic = (1426, 1800)     # bornes d'une tranche de revenu
+print(tranche_smic[0], tranche_smic[1])
+
+# Décommentez : Python refuse de modifier un tuple.
+# tranche_smic[0] = 1500
+#+END_SRC
+
+Un *dictionnaire* associe des *clés* à des *valeurs*. C'est la structure la
+plus utile du langage : elle décrit naturellement un individu, où chaque
+variable porte un nom.
+
+#+BEGIN_SRC python
+salarie = {
+    "sexe": "Femme",
+    "age": 34,
+    "diplome": "Bac+5 ou plus",
+    "salaire": 2850,
+}
+
+print(salarie["diplome"])            # accès par clé
+salarie["anciennete"] = 6            # ajout d'une clé
+print(salarie.keys())
+print(salarie.values())
+#+END_SRC
+
+Un *ensemble* (=set=) est une collection sans ordre et *sans doublon*. Il
+répond à une question précise : quelles sont les modalités distinctes ?
+
+#+BEGIN_SRC python
+diplomes = ["Bac", "Bac+5", "CAP-BEP", "Bac", "Bac+5", "Bac"]
+
+print(set(diplomes))            # les modalités distinctes
+print(len(set(diplomes)))       # combien y en a-t-il ?
+#+END_SRC
+
+*Exercice 2.2* /(socle)/ — Créez un dictionnaire décrivant un salarié (sexe,
+âge, secteur, salaire net). Affichez son salaire, puis ajoutez une clé
+=temps_travail= valant ="Temps partiel"= et affichez le dictionnaire complet.
+
+#+BEGIN_SRC python :corrige t
+salarie = {
+    "sexe": "Homme",
+    "age": 41,
+    "secteur": "Industrie",
+    "salaire": 2340,
+}
+
+print(salarie["salaire"])
+
+salarie["temps_travail"] = "Temps partiel"
+print(salarie)
+#+END_SRC
+
+* Les conditions
+
+#+BEGIN_SRC python
+salaire = 1380
+smic_net = 1426.30
+
+if salaire < smic_net:
+    print("En dessous du SMIC net.")
+elif salaire < 2100:
+    print("Entre le SMIC et le salaire médian.")
+else:
+    print("Au-dessus du salaire médian.")
+#+END_SRC
+
+Deux règles de syntaxe, non négociables en Python. La ligne du =if= se termine
+par un *deux-points*. Le bloc qui en dépend est *indenté* de quatre espaces :
+c'est l'indentation, et elle seule, qui délimite le bloc. Un décalage d'un
+espace est une erreur.
+
+Les branches sont examinées dans l'ordre et *la première vraie l'emporte* :
+dans l'exemple, un salaire de 1 380 € ne déclenche jamais le =elif=, même si
+la condition est vraie elle aussi.
+
+*Exercice 2.3* /(socle)/ — Écrivez un programme qui, à partir d'une variable
+=salaire=, affiche la tranche de revenu : ="Bas salaire"= en dessous de
+1 600 €, ="Salaire intermédiaire"= entre 1 600 et 2 600 €, ="Salaire élevé"=
+au-delà.
+
+#+BEGIN_SRC python :corrige t
+salaire = 2340
+
+if salaire < 1600:
+    tranche = "Bas salaire"
+elif salaire < 2600:
+    tranche = "Salaire intermédiaire"
+else:
+    tranche = "Salaire élevé"
+
+print(f"{salaire} € : {tranche}")
+#+END_SRC
+
+* Les boucles
+
+** La boucle =for=
+
+#+BEGIN_SRC python
+salaires = [1850, 2100, 2450, 1650, 3200]
+
+for salaire in salaires:
+    print(f"Salaire : {salaire} €")
+#+END_SRC
+
+=range()= engendre une suite d'entiers — utile pour répéter un nombre connu
+de fois. Comme le slicing, la borne de fin est exclue.
+
+#+BEGIN_SRC python
+# Projection d'un salaire sur 5 ans à 1,8 % par an.
+salaire = 2000
+
+for annee in range(1, 6):
+    salaire = salaire * 1.018
+    print(f"Année {annee} : {salaire:.2f} €")
+#+END_SRC
+
+** Accumuler dans une boucle
+
+C'est le motif central de la séance : on prépare un accumulateur avant la
+boucle, on l'alimente à chaque tour, on l'exploite après.
+
+#+BEGIN_SRC python
+salaires = [1850, 2100, 2450, 1650, 3200, 2050, 1900]
+
+total = 0
+for salaire in salaires:
+    total = total + salaire
+
+moyenne = total / len(salaires)
+print(f"Masse salariale : {total} €")
+print(f"Salaire moyen   : {moyenne:.2f} €")
+#+END_SRC
+
+** La boucle =while=
+
+=while= répète tant qu'une condition reste vraie. On l'emploie quand le
+nombre de tours n'est pas connu d'avance.
+
+#+BEGIN_SRC python
+# Combien d'années pour que ce salaire rattrape le salaire médian ?
+salaire = 1700
+median = 2100
+annees = 0
+
+while salaire < median:
+    salaire = salaire * 1.018
+    annees = annees + 1
+
+print(f"{annees} ans (salaire final : {salaire:.2f} €)")
+#+END_SRC
+
+Attention : si la condition ne devient jamais fausse, la boucle tourne
+indéfiniment. Vérifiez toujours que la variable testée est bien modifiée dans
+le corps de la boucle.
+
+*Exercice 2.4* /(socle)/ — Parcourez la liste =salaires= et comptez combien de
+salariés gagnent moins que le salaire médian (2 100 €). Affichez le compte et
+la part correspondante, en pourcentage.
+
+#+BEGIN_SRC python :corrige t
+salaires = [1850, 2100, 2450, 1650, 3200, 2050, 1900]
+median = 2100
+
+compte = 0
+for salaire in salaires:
+    if salaire < median:
+        compte = compte + 1
+
+part = compte / len(salaires) * 100
+print(f"{compte} salariés sur {len(salaires)} ({part:.1f} %)")
+#+END_SRC
+
+*Exercice 2.5* /(socle)/ — Reprenez la classification par tranche de
+l'exercice 2.3 et appliquez-la à toute la liste. Comptez le nombre de
+salariés dans chaque tranche à l'aide d'un dictionnaire.
+
+#+BEGIN_SRC python :corrige t
+salaires = [1850, 2100, 2450, 1650, 3200, 2050, 1900]
+
+effectifs = {"Bas salaire": 0, "Salaire intermédiaire": 0, "Salaire élevé": 0}
+
+for salaire in salaires:
+    if salaire < 1600:
+        tranche = "Bas salaire"
+    elif salaire < 2600:
+        tranche = "Salaire intermédiaire"
+    else:
+        tranche = "Salaire élevé"
+    effectifs[tranche] = effectifs[tranche] + 1
+
+for tranche, nombre in effectifs.items():
+    print(f"{tranche:22s} : {nombre}")
+#+END_SRC
+
+*Exercice 2.6* /(bonus)/ — Calculez le salaire *médian* de la liste sans
+utiliser de bibliothèque : triez, puis distinguez le cas d'un effectif pair
+de celui d'un effectif impair.
+
+#+BEGIN_SRC python :corrige t
+salaires = [1850, 2100, 2450, 1650, 3200, 2050, 1900]
+
+tries = sorted(salaires)
+n = len(tries)
+
+if n % 2 == 1:
+    mediane = tries[n // 2]
+else:
+    mediane = (tries[n // 2 - 1] + tries[n // 2]) / 2
+
+print(f"Médiane : {mediane} €")
+print(f"Moyenne : {sum(tries) / n:.2f} €")
+#+END_SRC
+
+* Ouverture : les compréhensions de listes
+
+Une *compréhension* construit une liste en une ligne. C'est l'idiome le plus
+caractéristique de Python, et il prépare directement la logique de pandas.
+
+#+BEGIN_SRC python
+salaires = [1850, 2100, 2450, 1650, 3200, 2050, 1900]
+
+# Une augmentation de 2 % pour tout le monde.
+augmentes = [round(s * 1.02, 2) for s in salaires]
+print(augmentes)
+
+# Avec un filtre : uniquement les salaires sous la médiane.
+bas = [s for s in salaires if s < 2100]
+print(bas)
+#+END_SRC
+
+Lisez =[s * 1.02 for s in salaires]= comme « =s * 1.02=, pour chaque =s= de
+=salaires= ». La version longue avec =for= et =append= fait exactement la même
+chose en quatre lignes. Retenez surtout la *forme filtrée* : c'est très
+précisément ce que vous écrirez en séance 4 sous la forme
+=df[df["salaire"] < 2100]=.
+
+*Exercice 2.7* /(bonus)/ — En une compréhension, construisez la liste des
+salaires *nets annuels* (13 mois) des salariés gagnant plus de 2 000 € par
+mois.
+
+#+BEGIN_SRC python :corrige t
+salaires = [1850, 2100, 2450, 1650, 3200, 2050, 1900]
+
+annuels = [s * 13 for s in salaires if s > 2000]
+
+print(annuels)
+#+END_SRC
+
+* Mini-projet : statistiques descriptives à la main
+
+Vous disposez d'une liste de dictionnaires — la forme la plus naturelle pour
+décrire plusieurs individus avant de connaître pandas.
+
+Écrivez un programme qui affiche : l'effectif total, le salaire moyen, le
+salaire moyen des femmes et celui des hommes, l'écart entre les deux en
+pourcentage, et l'effectif de chaque secteur.
+
+#+BEGIN_SRC python
+salaries = [
+    {"sexe": "Femme", "secteur": "Santé",      "salaire": 1980},
+    {"sexe": "Homme", "secteur": "Industrie",  "salaire": 2450},
+    {"sexe": "Femme", "secteur": "Commerce",   "salaire": 1750},
+    {"sexe": "Homme", "secteur": "Industrie",  "salaire": 2890},
+    {"sexe": "Femme", "secteur": "Santé",      "salaire": 2100},
+    {"sexe": "Homme", "secteur": "Commerce",   "salaire": 2050},
+    {"sexe": "Femme", "secteur": "Industrie",  "salaire": 2320},
+    {"sexe": "Homme", "secteur": "Santé",      "salaire": 2180},
+]
+#+END_SRC
+
+#+BEGIN_SRC python :corrige t
+salaries = [
+    {"sexe": "Femme", "secteur": "Santé",      "salaire": 1980},
+    {"sexe": "Homme", "secteur": "Industrie",  "salaire": 2450},
+    {"sexe": "Femme", "secteur": "Commerce",   "salaire": 1750},
+    {"sexe": "Homme", "secteur": "Industrie",  "salaire": 2890},
+    {"sexe": "Femme", "secteur": "Santé",      "salaire": 2100},
+    {"sexe": "Homme", "secteur": "Commerce",   "salaire": 2050},
+    {"sexe": "Femme", "secteur": "Industrie",  "salaire": 2320},
+    {"sexe": "Homme", "secteur": "Santé",      "salaire": 2180},
+]
+
+# Effectif et salaire moyen d'ensemble.
+tous = [p["salaire"] for p in salaries]
+print(f"Effectif      : {len(tous)}")
+print(f"Salaire moyen : {sum(tous) / len(tous):.2f} €")
+
+# Moyennes par sexe.
+femmes = [p["salaire"] for p in salaries if p["sexe"] == "Femme"]
+hommes = [p["salaire"] for p in salaries if p["sexe"] == "Homme"]
+
+moyenne_femmes = sum(femmes) / len(femmes)
+moyenne_hommes = sum(hommes) / len(hommes)
+ecart = (1 - moyenne_femmes / moyenne_hommes) * 100
+
+print()
+print(f"Femmes : {moyenne_femmes:.2f} € ({len(femmes)} obs.)")
+print(f"Hommes : {moyenne_hommes:.2f} € ({len(hommes)} obs.)")
+print(f"Écart  : {ecart:.1f} % au détriment des femmes")
+
+# Effectifs par secteur.
+print()
+effectifs = {}
+for personne in salaries:
+    secteur = personne["secteur"]
+    effectifs[secteur] = effectifs.get(secteur, 0) + 1
+
+for secteur, nombre in effectifs.items():
+    print(f"{secteur:12s} : {nombre}")
+#+END_SRC
+
+* Ce qu'il faut retenir
+
+- *Liste* pour une suite ordonnée et modifiable, *tuple* pour ce qui ne doit
+  pas changer, *dictionnaire* pour associer des noms à des valeurs,
+  *ensemble* pour les modalités distinctes.
+- Les indices commencent à *zéro* et la borne de fin d'une tranche est
+  *exclue*.
+- =if= / =elif= / =else= : deux-points, puis bloc indenté ; la première
+  branche vraie l'emporte.
+- Le motif « accumulateur avant la boucle, alimenté dans la boucle, exploité
+  après » résout la plupart des calculs descriptifs.
+- Une *compréhension filtrée* est l'ancêtre direct du filtrage pandas.
+
+La séance 3 introduit les fonctions : au lieu de recopier le calcul de
+tranche à chaque fois, nous lui donnerons un nom.

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Introduction à Python — M1 ETRH</title>
+<style>
+  :root {
+    --fond: #fbfaf8;
+    --texte: #1c1b1a;
+    --doux: #5d5a55;
+    --trait: #ddd8d0;
+    --accent: #7a2e2e;
+    --carte: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --fond: #17181a; --texte: #e8e6e3; --doux: #a09c96;
+      --trait: #32343a; --accent: #d98b8b; --carte: #1f2124;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 3rem 1.5rem 5rem;
+    background: var(--fond); color: var(--texte);
+    font-family: Palatino, "Palatino Linotype", Georgia, serif;
+    line-height: 1.65;
+  }
+  main { max-width: 46rem; margin: 0 auto; }
+  h1 { font-size: 2rem; margin: 0 0 .3rem; font-weight: normal; }
+  .sous { color: var(--doux); font-style: italic; margin: 0 0 2.5rem; }
+  h2 {
+    font-size: 1.05rem; text-transform: uppercase; letter-spacing: .09em;
+    color: var(--doux); font-weight: normal;
+    margin: 3rem 0 1rem; padding-bottom: .4rem;
+    border-bottom: 1px solid var(--trait);
+  }
+  ol.seances { list-style: none; padding: 0; margin: 0; }
+  ol.seances li { margin-bottom: .8rem; }
+  a.seance {
+    display: flex; align-items: baseline; gap: 1rem;
+    padding: 1rem 1.2rem; text-decoration: none; color: inherit;
+    background: var(--carte); border: 1px solid var(--trait);
+    border-radius: 6px; transition: border-color .15s, transform .15s;
+  }
+  a.seance:hover { border-color: var(--accent); transform: translateX(3px); }
+  .num {
+    font-size: 1.5rem; color: var(--accent); min-width: 1.4rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .titre { font-weight: bold; display: block; }
+  .detail { color: var(--doux); font-size: .92rem; }
+  .corrige {
+    margin-left: auto; font-size: .82rem; color: var(--doux);
+    white-space: nowrap; border: 1px solid var(--trait);
+    padding: .15rem .5rem; border-radius: 4px;
+  }
+  a.corrige:hover { color: var(--accent); border-color: var(--accent); }
+  p { margin: 0 0 1rem; }
+  .note {
+    background: var(--carte); border-left: 3px solid var(--accent);
+    padding: 1rem 1.2rem; margin: 1.5rem 0; font-size: .95rem;
+  }
+  code {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: .88em; background: var(--fond);
+    padding: .1em .35em; border-radius: 3px; border: 1px solid var(--trait);
+  }
+  footer {
+    margin-top: 4rem; padding-top: 1.2rem; border-top: 1px solid var(--trait);
+    color: var(--doux); font-size: .88rem;
+  }
+  footer a { color: var(--accent); }
+</style>
+</head>
+<body>
+<main>
+
+  <h1>Introduction à Python</h1>
+  <p class="sous">Programmation et analyse de données appliquées — Master 1 Économie du travail et ressources humaines</p>
+
+  <p>Les cinq séances du cours, exécutables directement dans ce navigateur.
+  Rien à installer, aucun compte à créer : Python tourne sur votre machine,
+  dans l&rsquo;onglet.</p>
+
+  <div class="note">
+    <strong>Premier chargement un peu long</strong> — une vingtaine de mégaoctets
+    sont téléchargés une fois, puis mis en cache. Votre travail est enregistré
+    dans ce navigateur : il survit à un rafraîchissement, mais pas à un
+    changement d&rsquo;ordinateur. Pour le conserver ou le rendre, utilisez
+    <code>File → Download</code>.
+  </div>
+
+  <h2>Les séances</h2>
+  <ol class="seances">
+    <li><a class="seance" href="./lite/notebooks/index.html?path=seance-1.ipynb">
+      <span class="num">1</span>
+      <span><span class="titre">Prise en main et fondamentaux</span>
+      <span class="detail">Variables, types, opérateurs, du brut au net, taux de croissance</span></span>
+    </a></li>
+    <li><a class="seance" href="./lite/notebooks/index.html?path=seance-2.ipynb">
+      <span class="num">2</span>
+      <span><span class="titre">Structures de données et contrôle du flux</span>
+      <span class="detail">Listes, dictionnaires, conditions, boucles, compréhensions</span></span>
+    </a></li>
+    <li><a class="seance" href="./lite/notebooks/index.html?path=seance-3.ipynb">
+      <span class="num">3</span>
+      <span><span class="titre">Fonctions, modules et bonnes pratiques</span>
+      <span class="detail">Fonctions, imports, gestion des erreurs, premiers pas avec NumPy</span></span>
+    </a></li>
+    <li><a class="seance" href="./lite/notebooks/index.html?path=seance-4.ipynb">
+      <span class="num">4</span>
+      <span><span class="titre">Manipulation de données avec pandas</span>
+      <span class="detail">Chargement, filtrage, statistiques descriptives, groupby</span></span>
+    </a></li>
+    <li><a class="seance" href="./lite/notebooks/index.html?path=seance-5.ipynb">
+      <span class="num">5</span>
+      <span><span class="titre">Visualisation, nettoyage et mini-analyse</span>
+      <span class="detail">Nettoyage, graphiques, régression, lancement du projet</span></span>
+    </a></li>
+  </ol>
+
+  <h2>Corrigés</h2>
+  <p>Chaque séance a son corrigé, avec toutes les solutions remplies :
+    <a href="./lite/notebooks/index.html?path=seance-1-corrige.ipynb">1</a> ·
+    <a href="./lite/notebooks/index.html?path=seance-2-corrige.ipynb">2</a> ·
+    <a href="./lite/notebooks/index.html?path=seance-3-corrige.ipynb">3</a> ·
+    <a href="./lite/notebooks/index.html?path=seance-4-corrige.ipynb">4</a> ·
+    <a href="./lite/notebooks/index.html?path=seance-5-corrige.ipynb">5</a>.
+    Cherchez d&rsquo;abord, regardez ensuite : c&rsquo;est en écrivant du code
+    qu&rsquo;on apprend à en écrire.</p>
+
+  <h2>Autres accès</h2>
+  <p><a href="./lite/lab/index.html">Ouvrir JupyterLab</a> — interface complète, avec
+    l&rsquo;arborescence des fichiers et plusieurs onglets. Plus riche, et plus
+    déroutante ; le lien des séances ci-dessus ouvre l&rsquo;interface simple, à
+    un seul document.</p>
+  <p><a href="./lite/tree/index.html">Parcourir les fichiers</a> — pour récupérer les
+    notebooks et les jeux de données (<code>data/</code>).</p>
+
+  <footer>
+    Cours de <a href="https://www.stephane-adjemian.fr/teaching/python-m1-etrh/">Stéphane Adjemian</a>,
+    Le Mans Université ·
+    <a href="https://git.ithaca.fr/stepan/python-m1-etrh">sources</a> ·
+    Python s&rsquo;exécute ici grâce à <a href="https://jupyterlite.readthedocs.io">JupyterLite</a> et <a href="https://pyodide.org">Pyodide</a>.
+  </footer>
+
+</main>
+</body>
+</html>
