@@ -144,13 +144,23 @@ fixe les versions vues par les étudiants. Aujourd'hui, Pyodide 314.0.5 :
 à jour de `jupyterlite-pyodide-kernel`, revérifier ce tableau.**
 
 `openpyxl` n'est pas fourni par Pyodide. Son wheel et celui de sa dépendance
-`et_xmlfile` sont versionnés dans [`lite/wheels/`](lite/wheels) et installés
-par `micropip` depuis le site lui-même — pas depuis PyPI, pour ne pas
-dépendre du réseau en cours. Deux précautions dans la cellule qui les
-installe (séance 4) : le préfixe `emfs:`, sans lequel le chemin serait
-cherché à côté de la page web et non dans le notebook ; et `et_xmlfile`
-installé **avant** `openpyxl`, qui en dépend — dans l'autre sens, micropip
-part chercher la dépendance sur PyPI.
+`et_xmlfile` sont versionnés dans [`lite/wheels/`](lite/wheels) et **indexés à
+la construction** par `--piplite-wheels`. La séance 4 écrit alors simplement :
+
+```python
+import piplite
+await piplite.install("openpyxl")
+```
+
+`piplite` puise dans un catalogue servi par le site, sans accès à Internet, et
+résout lui-même les dépendances.
+
+Une tentative précédente passait par `micropip.install("emfs:wheels/…")`,
+c'est-à-dire par un chemin de fichier. **Ne refaites pas cela** : le système
+de fichiers de JupyterLite est paresseux, les entrées d'un dossier ne se
+matérialisent qu'au premier accès, et l'installation échouait donc en
+`FileNotFoundError` — sauf si une cellule antérieure avait listé le dossier,
+ce qui rendait le bogue intermittent et très trompeur à diagnostiquer.
 
 Le cours s'en tient à **matplotlib** pour les graphiques : histogramme, nuage
 de points et diagramme en barres suffisent au programme, et une seule API
@@ -174,7 +184,7 @@ fichiers ailleurs que dans le cours.
 | `build/exercices.lua`   | filtre pandoc : bascule corrigé, cellules non exécutées |
 | `data/`                 | jeux de données versionnés                              |
 | `scripts/prepare-data.py` | construction et documentation des données             |
-| `lite/`                 | configuration JupyterLite, portail, wheels vendorisées   |
+| `lite/`                 | configuration JupyterLite, portail, wheels indexées      |
 | `Makefile`              | chaîne de construction (auteur)                          |
 | `cours.py`              | lanceur tout-en-un (utilisateur, hors ligne)             |
 | `requirements.txt`      | dépendances voulues, bornées sur Pyodide                 |

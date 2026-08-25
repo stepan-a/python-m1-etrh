@@ -46,7 +46,6 @@ Ce que contient ce dossier
     seance-1.ipynb ... seance-5.ipynb           les cinq séances
     seance-1-corrige.ipynb ...                  les corrigés
     data/                                       les jeux de données
-    wheels/                                     bibliothèques d'appoint
     DONNEES.md                                  d'où viennent les données
 
 Les notebooks lisent les données sous « data/ ». Gardez donc ce dossier

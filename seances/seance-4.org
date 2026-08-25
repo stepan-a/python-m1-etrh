@@ -87,19 +87,15 @@ bibliothèque supplémentaire, =openpyxl=, qui n'est pas fournie d'origine dans
 le navigateur : la cellule suivante l'installe si nécessaire.
 
 #+BEGIN_SRC python
-# En ligne (Pyodide), openpyxl est installé depuis les fichiers livrés avec le
-# cours. En local, il est déjà présent : l'import de micropip échoue et on
-# passe simplement à la suite.
+# En ligne, openpyxl est installé par « piplite », le gestionnaire de paquets
+# de JupyterLite. Il puise dans un catalogue livré avec le cours, donc sans
+# accès à Internet, et résout lui-même les dépendances.
 #
-# Deux détails qui comptent. Le préfixe « emfs: » dit à micropip de lire le
-# fichier dans le système de fichiers du notebook — sans lui, un chemin
-# relatif serait cherché à côté de la page web, et pas ici. Et et_xmlfile
-# s'installe AVANT openpyxl, qui en dépend : dans l'autre sens, micropip
-# irait chercher la dépendance manquante sur Internet.
+# En local, piplite n'existe pas : l'import échoue, on passe à la suite, et
+# openpyxl est de toute façon déjà installé par requirements.txt.
 try:
-    import micropip
-    await micropip.install("emfs:wheels/et_xmlfile-2.0.0-py3-none-any.whl")
-    await micropip.install("emfs:wheels/openpyxl-3.1.5-py2.py3-none-any.whl")
+    import piplite
+    await piplite.install("openpyxl")
 except ImportError:
     pass
 

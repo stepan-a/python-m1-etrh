@@ -109,13 +109,12 @@ notebooks/corriges/seance-%.ipynb: build/corrige/seance-%.md | $(VENV_PREREQ)
 # niveau que data/, et les deux environnements s'accordent.
 content: $(NOTEBOOKS) $(CORRIGES)
 	@rm -rf content
-	@mkdir -p content/data content/wheels
+	@mkdir -p content/data
 	@cp $(NOTEBOOKS) content/
 	@for n in $(SEANCES); do \
 	  cp notebooks/corriges/seance-$$n.ipynb content/seance-$$n-corrige.ipynb ; \
 	done
 	@cp data/* content/data/
-	@cp lite/wheels/*.whl content/wheels/ 2>/dev/null || true
 	@echo "✓ content/ assemblé."
 
 # --------------------------------------------------------------------------
@@ -136,15 +135,17 @@ check: content | $(VENV_PREREQ)
 	done
 	@echo "✓ les 5 corrigés s'exécutent sans erreur."
 
-# --contents et --output-dir sont résolus relativement à --lite-dir : on passe
-# donc des chemins absolus, sans quoi jupyterlite cherche « lite/content ».
+# --contents, --output-dir et --piplite-wheels sont tous résolus relativement
+# à --lite-dir : on passe donc des chemins absolus, sans quoi jupyterlite
+# cherche « lite/content » ou « lite/lite/wheels ».
 lite: content | $(VENV_PREREQ)
 	@rm -rf dist
 	$(JUPYTER) lite build \
 	  --lite-dir lite \
 	  --contents $(CURDIR)/content \
 	  --output-dir $(CURDIR)/dist/lite \
-	  --no-sourcemaps
+	  --no-sourcemaps \
+	  $(addprefix --piplite-wheels ,$(wildcard $(CURDIR)/lite/wheels/*.whl))
 	@# Le portail est déposé À CÔTÉ de l'application, jamais dedans.
 	@# jupyterlite remonte de son application jusqu'à sa racine en lisant le
 	@# index.html de chaque niveau, dont il extrait « jupyter-config-data » ;
@@ -163,7 +164,7 @@ zip: content lite/zip-index.html
 	@rm -rf $(ZIPDIR) dist/zip
 	@mkdir -p $(ZIPDIR) dist/zip
 	@cp content/*.ipynb $(ZIPDIR)/
-	@cp -r content/data content/wheels $(ZIPDIR)/
+	@cp -r content/data $(ZIPDIR)/
 	@cp cours.py requirements.txt LISEZMOI.txt DONNEES.md $(ZIPDIR)/
 	@$(PYTHON) -m zipfile -c dist/zip/$(ZIPDIR).zip $(ZIPDIR)/
 	@rm -rf $(ZIPDIR)
