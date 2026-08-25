@@ -1,10 +1,9 @@
 # CI du cours « Introduction à Python » (M1 ETRH).
 #
 # Le runner est le même que celui du site (tag « stepan@puck », exécuteur
-# shell, sans image Docker). Outils requis sur le runner :
-#   - make, pandoc, rsync
-#   - python3 avec le module venv        (la CI construit sa propre .venv)
-#   - release-cli                        (uniquement pour les Releases sur tag)
+# shell, sans image Docker). Outils requis sur le runner, tous présents :
+#   - make, pandoc, rsync, curl, python3 (avec le module venv)
+#   - release-cli, uniquement pour les Releases sur tag
 #
 # Installation unique de release-cli sur le runner :
 #   sudo curl -L -o /usr/local/bin/release-cli \
@@ -12,7 +11,6 @@
 #   sudo chmod +x /usr/local/bin/release-cli
 
 stages:
-  - build
   - verify
   - deploy
   - release
@@ -24,30 +22,21 @@ variables:
   # service exécute les jobs : le rsync ci-dessous écrit donc sans sudo.
   CIBLE: /puck/www/le-mans.adjemian.eu/python-m1-etrh
 
-# Construit les dix notebooks (5 séances + 5 corrigés) et le dossier servi.
-# On passe par la .venv du projet : elle fournit jupytext, jupyterlite et les
-# bibliothèques du cours dans les versions alignées sur Pyodide.
-notebooks:
-  stage: build
-  only:
-    - master@stepan/python-m1-etrh
-    - tags
-  tags:
-    - stepan@puck
-  script:
-    - make content
-    - test -f content/seance-1.ipynb
-    - test -f content/seance-5-corrige.ipynb
-    - test -f content/data/salaires.csv
-  artifacts:
-    paths:
-      - content/
-      - .venv/
-    expire_in: 1 day
+  # Le .venv compte ~31 000 fichiers. Il ne doit ni transiter par les
+  # artefacts — un premier essai a fait tomber l'instance en 502 pendant le
+  # téléversement — ni être reconstruit à chaque job. L'exclure du nettoyage
+  # git suffit : sur un exécuteur shell, le répertoire de build est conservé
+  # d'un job à l'autre, donc la .venv survit et « make » la réutilise telle
+  # quelle. Le reste est nettoyé normalement.
+  GIT_CLEAN_FLAGS: -ffdx -e .venv
 
-# Exécute les cinq corrigés dans l'arborescence exacte du site. C'est le
-# garde-fou de la source unique : un exercice dont la solution ne tourne plus
-# casse le pipeline, pas la séance.
+# Aucun artefact ne circule entre les jobs : chaque cible make reconstruit ce
+# dont elle a besoin dans le répertoire de build conservé, et tout est
+# incrémental. Seule la .venv, coûteuse, est explicitement préservée.
+
+# Construit les dix notebooks puis exécute les cinq corrigés, dans
+# l'arborescence exacte du site. C'est le garde-fou de la source unique : un
+# exercice dont la solution ne tourne plus casse le pipeline, pas la séance.
 corriges:
   stage: verify
   only:
@@ -55,10 +44,11 @@ corriges:
     - tags
   tags:
     - stepan@puck
-  dependencies:
-    - notebooks
   script:
     - make check
+    - test -f content/seance-1.ipynb
+    - test -f content/seance-5-corrige.ipynb
+    - test -f content/data/salaires.csv
 
 # Construit le site JupyterLite et le publie sous le-mans.adjemian.eu.
 # --delete est sans risque : le répertoire est dédié au cours, sur un vhost
@@ -69,12 +59,11 @@ site:
     - master@stepan/python-m1-etrh
   tags:
     - stepan@puck
-  dependencies:
-    - notebooks
   script:
     - make lite
     - test -f dist/index.html
     - test -f dist/lite/lab/index.html
+    - test -f dist/lite/files/seance-4.ipynb
     - mkdir -p "$CIBLE"
     - rsync -a --delete dist/ "$CIBLE/"
   environment:
@@ -89,9 +78,8 @@ release-zip:
     - tags
   tags:
     - stepan@puck
-  dependencies:
-    - notebooks
   script:
+    - make content
     - rm -rf cours-python-etrh
     - mkdir cours-python-etrh
     - cp -r content/*.ipynb content/data content/wheels cours-python-etrh/
