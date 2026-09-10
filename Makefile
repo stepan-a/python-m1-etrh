@@ -96,6 +96,55 @@ notebooks/corriges/seance-%.ipynb: build/corrige/seance-%.md | $(VENV_PREREQ)
 	$(JUPYTEXT) --to ipynb $< -o $@
 
 # --------------------------------------------------------------------------
+# Pyodide : CDN (par défaut) ou auto-hébergé
+# --------------------------------------------------------------------------
+# Par défaut, le noyau charge Pyodide depuis cdn.jsdelivr.net. Le site reste
+# léger (22 Mo) et le CDN est sensiblement plus rapide qu'un serveur unique.
+# Mais un réseau qui filtre ou étrangle jsdelivr rend le cours totalement
+# inutilisable — et cela se découvrirait en séance.
+#
+#     make lite PYODIDE=local
+#
+# bascule sur une copie servie par notre propre site : dist/ passe à ~355 Mo
+# et plus rien ne dépend de l'extérieur. En CI, il suffit de définir la
+# variable PYODIDE=local dans les réglages GitLab : make lit l'environnement.
+#
+# Avant de basculer, testez depuis un poste de la salle :
+#   curl -o /dev/null -w '%{http_code} %{speed_download}\n' \
+#     https://cdn.jsdelivr.net/pyodide/v314.0.5/full/pyodide.asm.wasm
+#
+# On héberge la distribution COMPLÈTE, pas seulement les 50 Mo utiles au
+# cours : les étudiants installeront d'autres bibliothèques pour leurs
+# projets, et un catalogue amputé les bloquerait sans message clair.
+#
+# La version n'est pas écrite ici mais lue dans jupyterlite-pyodide-kernel :
+# servir une version différente de celle qu'attend le noyau produirait des
+# erreurs incompréhensibles.
+PYODIDE_CACHE := .cache
+
+ifeq ($(PYODIDE),local)
+PYODIDE_VERSION := $(shell $(BIN)/python -c \
+  "from jupyterlite_pyodide_kernel.constants import PYODIDE_VERSION as v; print(v)" 2>/dev/null)
+ifeq ($(PYODIDE_VERSION),)
+$(error PYODIDE=local exige l'environnement virtuel : lancez « make venv » d'abord)
+endif
+PYODIDE_TARBALL := $(PYODIDE_CACHE)/pyodide-$(PYODIDE_VERSION).tar.bz2
+PYODIDE_URL := https://github.com/pyodide/pyodide/releases/download/$(PYODIDE_VERSION)/pyodide-$(PYODIDE_VERSION).tar.bz2
+PYODIDE_OPT := --pyodide $(CURDIR)/$(PYODIDE_TARBALL)
+PYODIDE_DEP := $(PYODIDE_TARBALL)
+else
+PYODIDE_OPT :=
+PYODIDE_DEP :=
+endif
+
+# Conservé hors du dépôt et hors de « make clean » : 334 Mo qu'il serait
+# absurde de retélécharger à chaque construction.
+$(PYODIDE_CACHE)/pyodide-%.tar.bz2:
+	@mkdir -p $(PYODIDE_CACHE)
+	@echo "▶ téléchargement de Pyodide $* (~334 Mo, une seule fois)…"
+	curl -fL --progress-bar -o $@ $(PYODIDE_URL)
+
+# --------------------------------------------------------------------------
 # Site JupyterLite : le dossier servi aux étudiants
 # --------------------------------------------------------------------------
 # content/ devient la racine du navigateur de fichiers dans le site.
@@ -138,14 +187,15 @@ check: content | $(VENV_PREREQ)
 # --contents, --output-dir et --piplite-wheels sont tous résolus relativement
 # à --lite-dir : on passe donc des chemins absolus, sans quoi jupyterlite
 # cherche « lite/content » ou « lite/lite/wheels ».
-lite: content | $(VENV_PREREQ)
+lite: content $(PYODIDE_DEP) | $(VENV_PREREQ)
 	@rm -rf dist
 	$(JUPYTER) lite build \
 	  --lite-dir lite \
 	  --contents $(CURDIR)/content \
 	  --output-dir $(CURDIR)/dist/lite \
 	  --no-sourcemaps \
-	  $(addprefix --piplite-wheels ,$(wildcard $(CURDIR)/lite/wheels/*.whl))
+	  $(addprefix --piplite-wheels ,$(wildcard $(CURDIR)/lite/wheels/*.whl)) \
+	  $(PYODIDE_OPT)
 	@# Le portail est déposé À CÔTÉ de l'application, jamais dedans.
 	@# jupyterlite remonte de son application jusqu'à sa racine en lisant le
 	@# index.html de chaque niveau, dont il extrait « jupyter-config-data » ;

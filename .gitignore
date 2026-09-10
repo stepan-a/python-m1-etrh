@@ -17,3 +17,7 @@ __pycache__/
 # Le syllabus n'est pas versionné : il est distribué par les canaux de
 # l'université, pas par le dépôt du cours.
 syllabus/
+
+# Copie locale de la distribution Pyodide (make lite PYODIDE=local),
+# 334 Mo téléchargés une fois et jamais versionnés.
+.cache/

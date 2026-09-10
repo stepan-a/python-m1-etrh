@@ -20,13 +20,20 @@ variables:
   # service exécute les jobs : le rsync ci-dessous écrit donc sans sudo.
   CIBLE: /puck/www/le-mans.adjemian.eu/python-m1-etrh
 
-  # Le .venv compte ~31 000 fichiers. Il ne doit ni transiter par les
-  # artefacts — un premier essai a fait tomber l'instance en 502 pendant le
-  # téléversement — ni être reconstruit à chaque job. L'exclure du nettoyage
-  # git suffit : sur un exécuteur shell, le répertoire de build est conservé
-  # d'un job à l'autre, donc la .venv survit et « make » la réutilise telle
-  # quelle. Le reste est nettoyé normalement.
-  GIT_CLEAN_FLAGS: -ffdx -e .venv
+  # Deux dossiers coûteux à reconstruire sont soustraits au nettoyage git.
+  #
+  # .venv compte ~31 000 fichiers. Il ne doit ni transiter par les artefacts
+  # — un premier essai a fait tomber l'instance en 502 pendant le
+  # téléversement — ni être reconstruit à chaque job.
+  #
+  # .cache contient la distribution Pyodide (334 Mo) quand on la sert
+  # soi-même (PYODIDE=local). Sans cette exclusion, elle serait
+  # retéléchargée à chaque pipeline.
+  #
+  # Sur un exécuteur shell, le répertoire de build est conservé d'un job à
+  # l'autre : les deux survivent et « make » les réutilise tels quels. Le
+  # reste est nettoyé normalement.
+  GIT_CLEAN_FLAGS: -ffdx -e .venv -e .cache
 
 # Aucun artefact ne circule entre les jobs : chaque cible make reconstruit ce
 # dont elle a besoin dans le répertoire de build conservé, et tout est
