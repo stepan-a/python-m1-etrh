@@ -96,7 +96,7 @@ print("Les commentaires ne s'affichent pas.")   # on peut aussi commenter ici
 
 Une *variable* est un nom auquel on attache une valeur, pour pouvoir la
 réutiliser. Le signe ~=~ ne signifie pas « égal » au sens mathématique : il
-signifie « range cette valeur sous ce nom ».
+signifie « range cette valeur sous ce nom », il s'agit d'un symbole d'assignation.
 
 #+BEGIN_SRC python
 salaire_brut = 2500
@@ -127,10 +127,12 @@ print(salaire_brut)
 
 ** Nommer ses variables
 
-Les règles imposées par Python sont peu nombreuses : un nom commence par une
-lettre ou un tiret bas, ne contient ni espace ni accent ni tiret ordinaire, et
-distingue les majuscules des minuscules (=salaire= et =Salaire= sont deux
-variables différentes).
+Les règles imposées par Python sont peu nombreuses : un nom commence
+par une lettre ou un tiret bas, ne contient pas d'espace, et distingue
+les majuscules des minuscules (=salaire= et =Salaire= sont deux variables
+différentes). N'importe quel caractère UTF-8 représentant une lettre
+est admissible (les lettres accentuées donc, caractères des
+syllabaires Hiragana ou Katakana japonnais, lettres grecques, ...).
 
 La règle qui compte vraiment n'est pas imposée par Python mais par le bon
 sens : *un nom doit dire ce que la variable contient*. =s=, =x1= et =truc=
@@ -171,15 +173,15 @@ Toute valeur en Python a un *type*. Le type décide de ce qu'on a le droit de
 faire avec la valeur. Quatre types suffisent pour aujourd'hui.
 
 #+BEGIN_SRC python
-age = 34                       # int   : nombre entier
+âge = 34                       # int   : nombre entier
 salaire = 2187.50              # float : nombre décimal (le séparateur est un POINT)
-diplome = "Master"             # str   : chaîne de caractères (string)
+diplôme = "Master"             # str   : chaîne de caractères (string)
 temps_plein = True             # bool  : booléen, True ou False
 
 # La fonction type() révèle le type d'une valeur.
-print(type(age))
+print(type(âge))
 print(type(salaire))
-print(type(diplome))
+print(type(diplôme))
 print(type(temps_plein))
 #+END_SRC
 
