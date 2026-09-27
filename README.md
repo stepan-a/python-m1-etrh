@@ -1,3 +1,5 @@
+![Tests](https://img.shields.io/endpoint?url=https://stephane-adjemian.fr/ci-status/python-m1-etrh.git.json)
+
 # Introduction à Python — M1 ETRH
 
 Cours d'initiation à Python pour économistes du travail : cinq séances de
